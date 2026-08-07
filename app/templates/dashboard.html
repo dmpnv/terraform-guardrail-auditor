@@ -126,8 +126,8 @@ td .mono{font-size:12px}
 .srchead .name{flex:1;font:600 12px var(--mono);color:var(--ink);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .srchead .val{font:600 12px var(--mono)}
-.srcbody{overflow-x:auto;padding:6px 0;background:var(--bg)}
-.srcline{display:flex;border-left:3px solid transparent;padding:0 10px 0 6px}
+.srcbody{overflow-x:auto;overflow-y:auto;max-height:780px;padding:6px 0;background:var(--bg)}
+.srcline{display:flex;border-left:3px solid transparent;padding:0 10px 0 6px;scroll-margin-top:70px}
 .srcline .ln{width:32px;flex:none;text-align:right;margin-right:12px;
   font:11px/1.7 var(--mono);color:var(--muted);user-select:none}
 .srcline .lt{font:11.5px/1.7 var(--mono);color:var(--ink-2);white-space:pre}
@@ -138,6 +138,16 @@ td .mono{font-size:12px}
   background:var(--surface-2);font-size:11.5px;color:var(--ink-2)}
 .srcnote .mono{font-size:11px;color:var(--ink)}
 a.loc:hover{text-decoration:underline}
+/* compact right-column table: fits its width, no horizontal scroll.
+   Fixed layout: the resource column absorbs the flex; locations stay on
+   one line in the common case and wrap only as a last resort. */
+.listcol table{table-layout:fixed;width:100%}
+.listcol th:nth-child(1){width:86px}
+.listcol th:nth-child(2){width:92px}
+.listcol th:nth-child(4){width:132px}
+.listcol th,.listcol td{padding:9px 8px}
+.listcol td{overflow-wrap:anywhere}
+.listcol .loc{white-space:normal;overflow-wrap:anywhere}
 
 /* merged posture panel */
 .posture .tiles{margin-bottom:16px}
@@ -292,31 +302,33 @@ footer{border-top:1px solid var(--border);padding-top:14px;display:flex;
   </div>
   {% if not has_sources %}<div class="note-muted">Source not stored for this scan.</div>{% endif %}
 
-  {% set list_table %}
-  {% if findings %}
-  <div class="table-scroll">
-    <table>
-      <thead><tr><th>Severity</th><th>Rule</th><th>Resource</th><th>Location</th><th>Detail</th></tr></thead>
-      <tbody>
-        {% for f in findings %}
-        <tr>
-          <td><span class="badge" style="border-color:{{ sev_meta[f.severity].color }}66">
-            <i class="glyph" style="color:{{ sev_meta[f.severity].color }}">{{ sev_meta[f.severity].glyph }}</i>{{ sev_meta[f.severity].label }}
-          </span></td>
-          <td class="mono">{{ f.rule_id }}</td>
-          <td class="mono">{{ f.resource_address }}</td>
-          <td>{% if f.line and has_sources %}<a class="loc" href="#{{ anchor_for(f.file) }}-L{{ f.line }}">{{ f.file }}:{{ f.line }}</a>{% else %}<span class="loc">{{ f.file }}{% if f.line %}:{{ f.line }}{% endif %}</span>{% endif %}</td>
-          <td>
-            {{ f.message }}
-            {% if f.evidence %}<br><span class="evidence">{{ f.evidence }}</span>{% endif %}
-            <div class="fix">Fix: {{ f.remediation }}</div>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% elif active_severity %}
+  {% macro findings_table(compact) %}
+  <table>
+    <thead><tr><th>Severity</th><th>Rule</th><th>Resource</th><th>Location</th>{% if not compact %}<th>Detail</th>{% endif %}</tr></thead>
+    <tbody>
+      {% for f in findings %}
+      <tr>
+        <td><span class="badge" style="border-color:{{ sev_meta[f.severity].color }}66">
+          <i class="glyph" style="color:{{ sev_meta[f.severity].color }}">{{ sev_meta[f.severity].glyph }}</i>{{ sev_meta[f.severity].label }}
+        </span></td>
+        <td class="mono">{{ f.rule_id }}</td>
+        <td class="mono">{{ f.resource_address }}</td>
+        <td>{% if f.line and has_sources %}<a class="loc" href="#{{ anchor_for(f.file) }}-L{{ f.line }}">{{ f.file }}:{{ f.line }}</a>{% else %}<span class="loc">{{ f.file }}{% if f.line %}:{{ f.line }}{% endif %}</span>{% endif %}</td>
+        {% if not compact %}
+        <td>
+          {{ f.message }}
+          {% if f.evidence %}<br><span class="evidence">{{ f.evidence }}</span>{% endif %}
+          <div class="fix">Fix: {{ f.remediation }}</div>
+        </td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endmacro %}
+
+  {% set empty_block %}
+  {% if active_severity %}
   <div class="empty-msg">No {{ sev_meta[active_severity].label }} findings in this scan — pick another filter.</div>
   {% else %}
   <div class="empty-msg">No findings. Every guardrail check passed for this scan.</div>
@@ -351,10 +363,10 @@ footer{border-top:1px solid var(--border);padding-top:14px;display:flex;
       </div>
       {% endfor %}
     </div>
-    <div class="listcol">{{ list_table }}</div>
+    <div class="listcol">{% if findings %}{{ findings_table(true) }}{% else %}{{ empty_block }}{% endif %}</div>
   </div>
   {% else %}
-  {{ list_table }}
+  {% if findings %}<div class="table-scroll">{{ findings_table(false) }}</div>{% else %}{{ empty_block }}{% endif %}
   {% endif %}
 </div>
 

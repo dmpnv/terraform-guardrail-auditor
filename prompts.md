@@ -54,6 +54,13 @@
   TrendPoint / ScanSummaryOut folded into ScanOut), and `samples/`
   (fixtures are the canonical corpus; parser tests rewritten against them).
   A guard test pins the deletions (404/405).
+- **UI polish (Turn 17, cosmetic only — no spec change):** right findings
+  column is a fixed-layout 4-column table (severity/rule/resource/location,
+  Detail+Fix dropped there since the left annotations carry them; the
+  no-stored-source fallback table keeps Detail, as no left column exists);
+  source blocks capped at ~40 lines with inner scroll + scroll-margin so
+  fragment anchors land inside the container; trend labels verified at 11
+  scans with no collisions — the ≤12 all-points threshold stands.
 - **Known-limitations section added to README (Turn 16, slice-4 scope):**
   `::/0` open-to-world variants not detected; module resolution and
   cross-file references out of scope beyond the S3 encryption companion;
@@ -519,3 +526,36 @@
 - **How verified:** claims cross-checked against yaml_engine.py behavior;
   pytest re-run **33/33** (unchanged, as expected for a doc-only change);
   remotes still absent.
+
+### Turn 17 — 2026-08-07 17:36 (+0200)
+
+**Prompt (verbatim):**
+
+> UI polish turn - a cosmetic iteration of the already-approved visual quality pass: no new elements, no spec change, every guarantee preserved (one server-rendered page, zero client JS, zero CDN, system fonts, inline SVG only). One commit for the UI polish; verify each point in the browser before committing.1. Findings list (right column): kill the horizontal scroll. The Detail and Fix columns are already shown in the left column's annotations - drop them from the right-hand table (keep severity, rule, resource, location link). The right column must fit its width with no overflow at the default desktop layout.2. Annotated source view (left column): cap each file block with a max-height (~40 lines) and an inner scroll, so one long .tf cannot stretch the page. The per-file header (name + score) stays visible above its block. Jump anchors from the right column must still land correctly inside the scrolled block (the :target line scrolls into view within its container - achievable with scroll-margin/anchor behavior, still zero JS).3. Trend point labels: verify visually with 8+ scans in history. If labels start colliding before the documented threshold of 12, lower the threshold so the first/last/min/max fallback kicks in earlier. Points themselves keep their native title tooltips either way.
+
+- **Intent:** cosmetic polish of the approved dashboard — compact right
+  column without horizontal scroll, capped source blocks with working
+  anchors, and a visual check of trend-label density.
+- **What changed (template only; zero JS/CDN preserved):** the findings
+  table became a Jinja macro — the split view's right column renders the
+  compact 4-column variant (severity, rule, resource, location link) with
+  `table-layout: fixed` (resource column absorbs the flex; location wraps
+  only as a last resort), while the no-stored-source fallback keeps the
+  Detail column since no left annotations exist there (logged
+  interpretation of "already shown in the left column"). Source blocks:
+  `.srcbody` capped at 780px (~40 lines) with inner scroll;
+  `scroll-margin-top` on lines so fragment anchors land cleanly inside the
+  container; per-file header stays above the block. One iteration during
+  verification: the first CSS pass let locations wrap mid-number
+  (`…tf:6/7`) — caught on screenshot (a same-document fragment navigation
+  had also masked the fix until a real reload) and corrected with the
+  fixed-layout widths.
+- **How verified (in Chrome, before committing):** right column fits with
+  no horizontal scroll and `long_demo.tf:67` renders on one line; a
+  69-line upload scrolls inside its capped block with the header pinned
+  above, and navigating to `#src-long-demo-tf-L67` (also combined with
+  `?severity=CRITICAL`) lands on the outlined line inside the scrolled
+  container with the filter applied to both columns; trend inspected at
+  **11 scans** — labels 58.4/100/35.7/21.3/35.7/21.3/75/100/0/40.5/85.1
+  all legible, no collisions, so the documented ≤12 threshold stands
+  unchanged. pytest **33/33**.
