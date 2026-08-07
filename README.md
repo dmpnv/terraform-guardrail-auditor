@@ -242,6 +242,9 @@ plus the no-stored-source fallback).
   whitespace-normalized substring matching on the policy text (heredoc /
   JSON strings). Policies built with `jsonencode()` arrive as unevaluated
   HCL expressions and are **not** matched.
+- **Interactive `/docs` needs network:** the Swagger UI page loads its assets
+  from a CDN (jsdelivr). The offline API reference is the curl section above —
+  the dashboard itself makes zero external requests.
 
 ## License
 

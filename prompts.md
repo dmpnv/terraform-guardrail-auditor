@@ -54,6 +54,12 @@
   TrendPoint / ScanSummaryOut folded into ScanOut), and `samples/`
   (fixtures are the canonical corpus; parser tests rewritten against them).
   A guard test pins the deletions (404/405).
+- **Turn 20 fixes:** remediation now joins the source-view annotations
+  (muted "Fix:" line beneath rule id + message) — resolves the Turn-19B
+  flag, so the deck caveat about "fix beneath" is cleared; and the /docs
+  CDN dependency is documented honestly (README Known limitations line +
+  title attribute on the header "API docs" link). SPEC annotation wording
+  updated accordingly.
 - **Deck preparation (Turn 19C, note only):** when the Marp deck is
   requested, include a "How it works" slide tightened to: one
   server-rendered page — zero client JS, zero CDN, runs offline from a
@@ -682,3 +688,25 @@
   message, per instruction.
 - **How verified:** n/a (log-only); working tree contains only prompts.md
   changes for this commit.
+
+### Turn 20 — 2026-08-07 18:31 (+0200)
+
+**Prompt (verbatim):**
+
+> Two small fixes, one turn, one commit. 1) Add the remediation line to the source-view annotations as you  proposed - rule id + message stay, fix joins beneath in muted style. 2) /docs honesty: the Swagger UI page   loads its assets from a CDN (jsdelivr) and needs network. Add one line to README Known limitations - the interactive /docs requires network; the offline API reference is the curl section - and label the header link "API docs" with a title attribute noting it needs network. Verify both in the browser, pytest,       commit.
+
+- **Intent:** add the remediation line to source annotations (resolving the
+  Turn-19B flag) and document the /docs CDN dependency honestly.
+- **What changed:** template — `.note-fix` span (muted, full-width wrap)
+  added to `.srcnote` beneath badge + rule id + message; the header "API
+  docs" link carries `title="Interactive Swagger UI — loads its assets from
+  a CDN, needs network"`. README Known limitations gains the /docs line
+  (offline reference = the curl section; the dashboard itself stays
+  zero-external-requests). SPEC's Turn-14 annotation wording updated to
+  include the muted remediation (Turn 20). Form e2e extended: asserts
+  "Fix:" and the RDS remediation text now render in the split view.
+- **How verified:** pytest **35/35** including the new assertions; in
+  Chrome — all three annotations on scan #17 show the muted Fix line
+  (light theme); the title attribute confirmed in the served HTML via curl
+  (native title tooltips are OS overlays that screenshots don't capture —
+  stated honestly rather than claimed).

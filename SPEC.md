@@ -96,7 +96,8 @@ the freed space goes to the findings area, which becomes two columns:
 file: filename + per-file score header, then the file text as escaped
 monospace lines with line numbers; lines that produced findings are
 highlighted in the severity color and carry an annotation line beneath —
-severity badge + rule id + message; each flagged line has an anchor id of the
+severity badge + rule id + message, with the remediation beneath in muted
+style (Turn 20); each flagged line has an anchor id of the
 form `#src-<sanitized-file>-L<n>`, e.g. `#src-main-tf-L23`); **right**, the
 findings list as before, its `file:line` location rendered as a plain
 fragment link jumping to the highlighted line. The severity filter chips

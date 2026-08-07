@@ -144,6 +144,9 @@ def test_dashboard_form_upload_redirects_and_renders(client):
     assert 'href="#src-form-rds-tf-L2"' in page.text         # list links to source
     assert "publicly_accessible = true" in page.text         # escaped source text
     assert "RDS instance is publicly accessible." in page.text  # annotation message
+    # Turn-20 fix: remediation joins the annotation, muted, beneath
+    assert "Fix:" in page.text
+    assert "SSM port forwarding" in page.text                # rds remediation text
 
 
 def test_dashboard_without_stored_sources_shows_note(client):
