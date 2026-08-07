@@ -54,6 +54,15 @@
   TrendPoint / ScanSummaryOut folded into ScanOut), and `samples/`
   (fixtures are the canonical corpus; parser tests rewritten against them).
   A guard test pins the deletions (404/405).
+- **Deck DELIVERED (Turn 22):** deck/deck.md — 10 Marp slides on the user's
+  CSS theme (verbatim; one disclosed gap-fill addition: `thead tr`
+  transparent, completing the theme's own transparent-table intent against
+  marp's default white). Text-only, offline-rendering; PDF built cleanly
+  with marp-cli and gitignored (deck/*.pdf), not committed. All slide
+  numbers pulled from repo/git: 35 tests, 7 rules, 5 operators,
+  5 endpoints, 11 fixtures, 25 commits pre-deck, 21 turns logged, MVP at
+  2:33 (commit f692820). Turn-C caveats reconciled: "fix beneath" is now
+  literally true (Turn 20); theme phrased as cookie, not URL.
 - **Turn 21 OpenAPI polish:** operationIds are route names
   (health, list_rules, create_scan, get_scan, scan_findings) via
   generate_unique_id_function; multipart body schema is Body_create_scan;
@@ -736,3 +745,36 @@
   404 descriptions "Scan not found"; /docs re-checked in Chrome — clean
   operation names, Body_create_scan in the schema list, and Get Scan's
   responses table showing 200 / 404 Scan not found / 422.
+
+### Turn 22 — 2026-08-07 18:47 (+0200)
+
+**Prompt (verbatim):**
+
+> here is my slide theme CSS, use it for the deck:---marp: truetheme: defaultpaginate: falsesize: 16:9style: |  section {    font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;    background: linear-gradient(160deg, #0a1a2f 0%, #122843 100%);    color: #eef2f7; text-align: left; justify-content: flex-start; padding-top: 54px;  }  section h2 {    color: #ffb703; font-size: 22px; letter-spacing: 3px; text-transform: uppercase;    border: none; margin-bottom: 10px; font-weight: 700;  }
+> section h1 { color: #ffffff; font-size: 42px; line-height: 1.2; margin: 0 0 18px 0; }  section h1 strong, section h2 strong { color: #ffb703; }  section p  { color: #b7c6d8; font-size: 24px; line-height: 1.45; margin: 8px 0; }  section strong { color: #ffb703; }  section em { color: #7f97ad; font-style: normal; font-size: 20px; }  section ul, section ol { color: #cdd9e6; font-size: 23px; line-height: 1.5; margin: 6px 0; }  section li { margin: 4px 0; }  section table { border-collapse: collapse; margin: 14px 0 0 0; font-size: 20px; width: 100%; }  section table thead td, section table th {    color: #ffb703 !important; background: transparent !important; border: none !important;    border-bottom: 1px solid #2a4a6e !important; font-weight: 700; text-align: left; padding: 6px 14px 6px 0;  }  section table tbody td {    color: #cdd9e6 !important; background: transparent !important; border: none !important;    border-bottom: 1px solid #1b3a57 !important; padding: 7px 14px 7px 0; vertical-align: top;  }  section table tbody tr { background: transparent !important; }
+> section .takeaway { color: #ffb703; font-size: 22px; margin-top: 16px; font-weight: 600; }  section .loop {    position: absolute; top: 58px; right: 54px;    font-size: 14px; letter-spacing: 2px; color: #46617f; font-weight: 600;  }  section .loop strong { color: #ffb703; }  section img { display: block; margin: 10px auto; background: #f4f7fa; padding: 8px;    border-radius: 10px; box-shadow: 0 8px 28px rgba(0,0,0,0.45); max-height: 420px; }----Build the slide deck now. One turn, own commit. Marp markdown, file: deck/deck.md, committed to the repo.Use the CSS above verbatim as the Marp theme (inline it the way Marp expects; do not alter its rules,only add the minimal Marp scaffolding it needs). Text only: no external images, no webfonts, no linksto third-party assets - the deck must render offline. Render a PDF locally with npx @marp-team/marp-clito verify it builds cleanly; do NOT commit the PDF - gitignore it. The markdown deck is the deliverablein the repo; the PDF is for separate distribution.----8-10 slides, tight, English. Suggested flow - adapt wording, keep the substance:1. Title: product name, one-line what-it-is.2. The exercise: vibe coding - the human architects and gates, the AI writes every line end to end.3. What was built: 7 security guardrails for Terraform, API-first (FastAPI + SQLite),server-rendered dashboard, 35 tests.4. How it works: use the slide content you stored in Turn C, reconciled with its two caveats.5. Rules are data: rules.yaml, closed operator vocabulary, extensibility test; case in point -the IPv6 world-open gap was closed by a YAML edit with zero engine changes, verified live on a running server.6. Process: spec first and user-approved; Turn 1 ran ahead and generated a full draft - it was frozenas an unreviewed draft and audited into compliance through four verified, committed slices;every prompt logged verbatim in prompts.md with intent / change / verification.7. Honest clock: T0 at first message, elapsed from the system clock every turn, MVP reached at 2:34against the 4-6h goal; even a milestone timestamp correction is its own commit.8. Numbers: tests, commits, rules, endpoints, themes, zero manual edits, zero CDN - pull the realvalues from the repo and git, do not estimate them.9. Limitations and roadmap: the README's known limitations, plus roadmap - a thin CLI wrapper overthe API for CI, more port rules as data, CloudFormation, and where GenAI slots in next: LLM-draftedremediation explanations behind a seam, opt-in and outside the verdict path - the scanner itselfstays deterministic by design.10. Closing: repo map - README, SPEC.md, prompts.md, rules.yaml, tests.----Keep every number verifiable: anything you state on a slide must be checkable in the repo or git.Update prompts.md as always, commit, and report elapsed. After this turn: stop - end-of-day wrap-upcomes as a separate message.
+
+- **Intent:** build the Marp deck (deck/deck.md) on the supplied CSS theme,
+  10 slides per the suggested flow, all numbers repo-verifiable; render a
+  PDF locally to verify, gitignore it; own commit; then stop.
+- **What changed:** deck/deck.md — 10 slides following the flow; the
+  supplied CSS inlined verbatim in the Marp frontmatter with minimal
+  scaffolding (the frontmatter keys as intended plus `html: true`, which
+  the theme's .takeaway class requires). ONE disclosed addition, clearly
+  commented in the file: `section table thead tr { background: transparent
+  !important; }` — marp's default theme paints thead tr white and the
+  supplied rules cover thead td/th and tbody tr but not thead tr; the line
+  completes the theme's own transparent-table intent, no supplied rule
+  altered (defect caught visually on the Numbers slide, fixed,
+  re-rendered). Numbers pulled live before writing: 35 tests, 7 rules,
+  5 operators, 5 endpoints, 11 fixtures, 25 commits pre-deck, 21 logged
+  turns, MVP elapsed 2:33 per prompts.md (the suggested "2:34" was the
+  end-of-turn elapsed; the slide carries the repo-verifiable
+  milestone-commit figure). Turn-C caveats reconciled: "fix beneath" is
+  true since Turn 20; the theme bullet says cookie, not URL. .gitignore:
+  deck/*.pdf. Deck is text-only — no images, no webfonts, no external
+  assets; renders offline.
+- **How verified:** `npx @marp-team/marp-cli` built deck/deck.pdf cleanly
+  (10 pages); slides rendered to PNG and visually inspected (title and
+  numbers slides checked; thead fix confirmed on re-render); pytest
+  **35/35** re-run for the tests figure; PDF not committed (gitignored).

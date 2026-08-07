@@ -1,5 +1,6 @@
 .venv/
 __pycache__/
+deck/*.pdf
 *.pyc
 .pytest_cache/
 data/
