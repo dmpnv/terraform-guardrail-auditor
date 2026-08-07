@@ -1,4 +1,4 @@
-# SPEC — Terraform Guardrail Auditor (MVP) · v1, for approval
+# SPEC — Terraform Guardrail Auditor (MVP) · v2 · approved (Turn 9)
 
 ## Purpose & scope
 Audit Terraform HCL against **seven fixed security guardrails** via a local,
