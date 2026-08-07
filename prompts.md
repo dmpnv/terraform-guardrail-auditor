@@ -1,5 +1,20 @@
 # Prompt Audit Log — Enterprise Security Guardrail Auditor
 
+## SESSION CLOSED — 2026-08-07 18:56 (+0200)
+
+- **Total elapsed: 4:10** (T0 2026-08-07T14:46:28+02:00 → close, system
+  clock). MVP was reached at **2:33** against the 4–6h goal; everything
+  after was user-directed post-MVP work (theming, annotated source view,
+  IPv6 data-change, OpenAPI polish, the deck), all inside the 16h cap.
+- Final state: 35/35 tests green on the closing run; 27 commits including
+  this closure; working tree clean; **no remotes were ever created and
+  nothing was ever pushed** — the repository is local until the user
+  publishes it. Deliverables: the auditor (app/, rules.yaml, tests/),
+  SPEC.md (approved + amendments), README.md, LICENSE (MIT),
+  deck/deck.md (PDF rendered locally, gitignored), and this log.
+- The dev server on 127.0.0.1:8011 was stopped at close; restart per the
+  README quickstart.
+
 ## Decisions (kept current)
 
 - **T0 = 2026-08-07T14:46:28+02:00** — moment of the user's first message,
@@ -778,3 +793,18 @@
   (10 pages); slides rendered to PNG and visually inspected (title and
   numbers slides checked; thead fix confirmed on re-render); pytest
   **35/35** re-run for the tests figure; PDF not committed (gitignored).
+
+### Turn 23 — 2026-08-07 18:56 (+0200) — session close
+
+**Prompt (verbatim):**
+
+> End-of-day wrap-up: close the log, final commit, report total elapsed
+
+- **Intent:** close the audit log, make the final commit, report total
+  elapsed.
+- **What changed:** SESSION CLOSED header added at the top of this file
+  with the totals; dev server stopped; nothing else touched — this closure
+  is the final commit of the session.
+- **How verified:** closing pytest run **35/35**; `git status` clean before
+  the closure commit; `git remote -v` empty (nothing ever pushed); total
+  elapsed computed from the system clock against the fixed T0.
