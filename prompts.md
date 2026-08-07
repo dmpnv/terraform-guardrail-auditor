@@ -24,6 +24,12 @@
   rule = editing `rules.yaml` only, zero code changes; rules path configurable
   via `GUARDRAIL_RULES_FILE`; proven by a dedicated extensibility test
   (slice 2); policy stated in SPEC.md and README.
+- Spec amended (Turn 4): **evaluated check defined precisely** — one
+  (rule, resource) pair whose resource type matches the rule's
+  `resource_type` list; rules with no matching type in the scan add nothing
+  to the denominator; a failed pair counts its weight once. Worked example
+  (score 40.5 = 100 × (1 − 22/37)) in README; score-formula pytest lands in
+  slice 3.
 - MVP milestone: **not yet reached**.
 - Draft leftovers still live outside git: `.venv/`, `data/guardrail.db`
   (both gitignored), and a draft uvicorn server still serving on
@@ -97,4 +103,24 @@
   with the rules-are-data policy plus an honest status note that the draft
   still ships Python rules until slice 2. No implementation code touched.
 - **How verified:** documentation-only diff (`git show --stat`); remotes
+  still absent. Spec remains **awaiting approval**.
+
+### Turn 4 — 2026-08-07 15:39 (+0200)
+
+**Prompt (verbatim):**
+
+> In the score formula, define "evaluated checks" precisely: one evaluated check = one (rule, resource) pair where the resource's type matches the rule's resource_type list. Rules whose resource_type is absent from the scan contribute nothing to the denominator. Put a worked numeric example in the README and add one pytest asserting the formula on a known fixture (expected score computed by hand).
+
+- **Intent:** pin down the score denominator semantics; require a
+  hand-checkable worked example in the README and a pytest asserting it.
+- **What changed:** SPEC.md scoring section rewritten with the precise
+  definition (pair semantics; absent-type rules excluded from the
+  denominator; a failed pair counts its weight once), and a score-formula
+  test added to Tests and slice 3. README gains a "Risk score" section:
+  formula, precise definition, and the worked example — denominator
+  10+10+10+2+5 = 37, numerator 10+10+2 = 22, score = 100 × (1 − 22/37) =
+  40.5405… → 40.5 — with a status note that the draft still runs interim
+  weights until slice 3. prompts.md updated. No implementation code touched.
+- **How verified:** arithmetic re-checked by hand (22/37 = 0.59459…;
+  1 − 0.59459… = 0.40540…; ×100 → 40.5); documentation-only diff; remotes
   still absent. Spec remains **awaiting approval**.

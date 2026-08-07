@@ -63,11 +63,17 @@ no JS framework, no webfonts — zero external requests.**
 
 ## Storage & scoring
 SQLite only (`data/guardrail.db`, SQLAlchemy), tables `scans` and `findings`;
-history persists across runs to draw the trend. Score (formula goes in
-README): weights CRITICAL=10, HIGH=5, MEDIUM=2, LOW=1;
+history persists across runs to draw the trend. Score (formula **and worked
+numeric example** go in README): weights CRITICAL=10, HIGH=5, MEDIUM=2, LOW=1;
 `score = 100 × (1 − Σ weight(failed checks) / Σ weight(evaluated checks))`,
 rounded to 1 decimal; no evaluated checks → 100. Computed **per file and per
-scan**.
+scan** (per file = the same formula restricted to that file's resources).
+
+**Evaluated check, precisely: one (rule, resource) pair where the resource's
+type matches the rule's `resource_type` list.** A rule whose `resource_type`
+does not occur anywhere in the scan contributes **nothing** to the
+denominator. A failed pair adds its rule's weight to the numerator **once**,
+no matter how many clauses or attribute matches it produced.
 
 ## Tests
 pytest golden fixtures in `tests/fixtures/`: one deliberately-bad `.tf` per
@@ -79,6 +85,11 @@ append a brand-new rule in YAML only (e.g. LOW / `aws_s3_bucket` /
 `tags absent`), point the engine at the copy via `GUARDRAIL_RULES_FILE`, scan
 a fixture, and assert the new rule id surfaces as a finding with full
 provenance — zero code changes anywhere.
+
+And a **score-formula test**: the README's worked example as a fixture
+(public + unencrypted S3 bucket, security group with SSH 22 open to
+0.0.0.0/0, encrypted EBS volume; no RDS, no IAM anywhere) — asserts the scan
+scores exactly **40.5**, hand-computed as `100 × (1 − 22/37)`.
 
 ## Repo hygiene
 Pinned `requirements.txt` (adds PyYAML, python-multipart, Jinja2; removes
@@ -94,8 +105,9 @@ no remotes, no push.
    **one rule (SSH-WORLD) end to end** + its golden fixture test.
 2. Remaining six rules in `rules.yaml` + fixtures + the rule-extensibility
    test; **delete** the Python 11-rule pack.
-3. Per-file + total score, server-rendered dashboard with inline-SVG trend
-   (**delete** the Chart.js/Google-Fonts CDN page), multipart `POST /scans`.
+3. Per-file + total score + the score-formula test (hand-computed 40.5
+   fixture), server-rendered dashboard with inline-SVG trend (**delete** the
+   Chart.js/Google-Fonts CDN page), multipart `POST /scans`.
 4. README, LICENSE, pinned requirements, polish; **delete** everything the
    spec doesn't call for — `GET /scans` list, `DELETE /scans/{id}`,
    `/api/v1/summary`, JSON-body scan inputs (path + inline), `samples/`

@@ -22,7 +22,7 @@ OpenAPI docs (/docs)      SQLite via SQLAlchemy (data/guardrail.db)
 - **Free database** — SQLite by default; point `GUARDRAIL_DATABASE_URL` at
   Postgres/MySQL to swap (SQLAlchemy handles both).
 - **Severity-weighted scoring** — failing a CRITICAL check costs 10× a LOW one;
-  scans get a 0–100 score and an A–F grade.
+  exact formula and a worked example under *Risk score* below.
 
 ## Quickstart (Windows PowerShell)
 
@@ -80,6 +80,46 @@ a newly added YAML rule is picked up by the engine and produces a finding.
 *(Status note: the committed draft still ships rules as Python code in
 `app/engine/rules.py`; the migration to `rules.yaml` is governed by `SPEC.md`
 and lands in slice 2.)*
+
+## Risk score
+
+Weights: CRITICAL = 10, HIGH = 5, MEDIUM = 2, LOW = 1.
+
+**One evaluated check = one (rule, resource) pair** where the resource's type
+matches the rule's `resource_type` list. Rules whose `resource_type` does not
+occur anywhere in the scan contribute nothing to the denominator. A failed
+pair counts its rule's weight once, no matter how many clauses matched.
+
+```
+score = 100 × (1 − Σ weight(failed checks) / Σ weight(evaluated checks))
+```
+
+rounded to one decimal; a scan with zero evaluated checks scores 100.0. The
+per-file score applies the same formula to that file's resources only.
+
+**Worked example** — one file containing an S3 bucket with
+`acl = "public-read"` and no encryption, a security group with SSH 22 open to
+0.0.0.0/0, and an EBS volume with `encrypted = true`; no RDS instance and no
+IAM policy anywhere in the scan:
+
+| Rule (severity → weight) | Evaluated against | Result |
+|---|---|---|
+| S3-PUBLIC (CRITICAL → 10) | the bucket | FAIL |
+| SSH-WORLD (CRITICAL → 10) | the security group | FAIL |
+| RDP-WORLD (CRITICAL → 10) | the security group | pass |
+| S3-NO-ENCRYPTION (MEDIUM → 2) | the bucket | FAIL |
+| EBS-NO-ENCRYPTION (HIGH → 5) | the volume | pass |
+| RDS-PUBLIC (HIGH → 5) | no `aws_db_instance` in scan | not evaluated |
+| IAM-WILDCARD (HIGH → 5) | no IAM policy resources in scan | not evaluated |
+
+Denominator = 10 + 10 + 10 + 2 + 5 = **37** · numerator = 10 + 10 + 2 = **22**
+
+`score = 100 × (1 − 22/37) = 40.5405… →` **40.5**
+
+This exact fixture with its hand-computed 40.5 is asserted by a pytest.
+*(Status note: the committed draft still runs interim weights 10/6/3/1 over an
+11-rule pack; the formula above becomes the implementation in slice 3 per
+`SPEC.md`.)*
 
 ## Tests
 
