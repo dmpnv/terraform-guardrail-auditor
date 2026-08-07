@@ -54,8 +54,22 @@
 - **Interpretation 3 ACCEPTED as proposed (Turn 9)** — severities: CRITICAL
   for S3-PUBLIC / SSH-WORLD / RDP-WORLD, HIGH for EBS-NO-ENCRYPTION /
   RDS-PUBLIC / IAM-WILDCARD, MEDIUM for S3-NO-ENCRYPTION. All three
-  interpretations are now accepted. **Only overall spec approval remains
-  before slice 1.**
+  interpretations are now accepted.
+- **SPEC APPROVED (Turn 10)** — header stamped "v2 · approved (Turn 9)".
+  Slices are go.
+- **Slice 1 DELIVERED (Turn 10):** rules.yaml (SSH-WORLD only) + YAML engine
+  (loader validates the closed vocabulary — all five operators; open_port
+  implemented, the four scalar operators arrive with slice 2 and raise if
+  used early) + provenance with evidence (parser retains sources + block
+  spans; evidence = first in-span line containing the match, else the block
+  header) + golden fixture tests/fixtures/ssh_world.tf asserting line 11 and
+  the exact snippet. Scanner runs the YAML pack with spec weights
+  (10/5/2/1); scan-level score only — per-file + formula test stay slice 3.
+  Slice-1 deletions/rewrites from the draft: Finding.rule_title column
+  dropped (spec provenance fields only), RuleOut/TopRule trimmed to spec
+  fields, draft tests tied to the 11-rule code pack rewritten (pack itself
+  is deleted in slice 2), three one-line dashboard patches for the removed
+  field. pytest 17/17.
 
 ---
 
@@ -231,3 +245,29 @@
   code touched.
 - **How verified:** documentation-only diff; remotes still absent. The only
   gate left before slice 1 is overall spec approval.
+
+### Turn 10 — 2026-08-07 16:04 (+0200)
+
+**Prompt (verbatim):**
+
+> Update the SPEC.md header to "v2 · approved (Turn 9)" - the body already records all three acceptance
+
+- **Intent:** stamp the spec approved (v2, as of Turn 9) — the overall
+  approval gate. Per the agreed protocol ("on your word, slice 1 begins"),
+  this green-lights slice 1.
+- **What changed:** SPEC.md header updated and committed alone (`b9b1b64`).
+  Then slice 1, committed separately: `rules.yaml` with SSH-WORLD;
+  `app/engine/yaml_engine.py` (loader with closed-vocabulary validation +
+  open_port evaluation); parser extended with source retention and block
+  spans for bounded evidence scans; scanner rewired to the YAML pack with
+  spec weights; `Finding.rule_title` dropped and `Finding.evidence` added;
+  RuleOut/TopRule reduced to spec fields; PyYAML==6.0.3 pinned; golden
+  fixture `tests/fixtures/ssh_world.tf` + `tests/test_yaml_engine.py`;
+  draft tests tied to the Python 11-rule pack rewritten (parser-focused
+  test_engine.py, SSH-WORLD-based test_api.py); three one-line patches to
+  the draft dashboard for the removed field. Dev server restarted on the
+  new code with a fresh database (old schema had rule_title).
+- **How verified:** pytest **17/17** (loader validation, env override,
+  golden fixture asserting file/line 11/evidence snippet/score 50.0,
+  API end-to-end returning the finding with provenance); live health check
+  after restart shows rules_loaded = 1.

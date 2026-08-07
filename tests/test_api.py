@@ -1,8 +1,8 @@
 SNIPPET = """
 resource "aws_security_group" "open" {
   ingress {
-    from_port   = 3389
-    to_port     = 3389
+    from_port   = 22
+    to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -13,13 +13,15 @@ resource "aws_security_group" "open" {
 def test_health(client):
     r = client.get("/api/v1/health")
     assert r.status_code == 200
-    assert r.json()["status"] == "ok"
+    body = r.json()
+    assert body["status"] == "ok"
+    assert body["rules_loaded"] == 1
 
 
 def test_rules_endpoint(client):
     r = client.get("/api/v1/rules")
     assert r.status_code == 200
-    assert any(rule["id"] == "GR-NET-001" for rule in r.json())
+    assert any(rule["id"] == "SSH-WORLD" for rule in r.json())
 
 
 def test_inline_scan_roundtrip(client):
@@ -31,7 +33,7 @@ def test_inline_scan_roundtrip(client):
     scan = r.json()
     assert scan["checks_failed"] >= 1
     assert scan["severity_counts"]["CRITICAL"] >= 1
-    assert any(f["rule_id"] == "GR-NET-001" for f in scan["findings"])
+    assert any(f["rule_id"] == "SSH-WORLD" for f in scan["findings"])
     sid = scan["id"]
 
     r2 = client.get(f"/api/v1/scans/{sid}/findings", params={"severity": "critical"})
@@ -54,7 +56,6 @@ def test_path_scan_of_samples(client):
     })
     assert r.status_code == 201, r.text
     assert r.json()["score"] < 60
-    assert r.json()["grade"] == "F"
 
 
 def test_unknown_path_is_400(client):

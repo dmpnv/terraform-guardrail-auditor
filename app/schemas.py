@@ -54,12 +54,12 @@ class FindingOut(BaseModel):
 
     id: int
     rule_id: str
-    rule_title: str
     severity: str
     resource_type: str
     resource_address: str
     file: str
     line: Optional[int]
+    evidence: str
     message: str
     remediation: str
 
@@ -96,20 +96,18 @@ class ScanOut(ScanSummaryOut):
 
 
 class RuleOut(BaseModel):
+    """A rule as declared in rules.yaml (rules are data — SPEC.md)."""
     model_config = ConfigDict(from_attributes=True)
 
     id: str
-    title: str
-    description: str
     severity: str
-    resource_types: list
+    resource_type: list
+    message: str
     remediation: str
-    references: list
 
 
 class TopRule(BaseModel):
     rule_id: str
-    rule_title: str
     severity: str
     count: int
 

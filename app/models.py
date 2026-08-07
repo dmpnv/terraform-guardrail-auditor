@@ -51,14 +51,14 @@ class Finding(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id", ondelete="CASCADE"), index=True)
-    rule_id: Mapped[str] = mapped_column(String(20), index=True)
-    rule_title: Mapped[str] = mapped_column(String(200))
+    rule_id: Mapped[str] = mapped_column(String(40), index=True)
     severity: Mapped[str] = mapped_column(String(10), index=True)
     severity_rank: Mapped[int] = mapped_column(Integer, default=99)
     resource_type: Mapped[str] = mapped_column(String(120))
     resource_address: Mapped[str] = mapped_column(String(300))
     file: Mapped[str] = mapped_column(String(500))
     line: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    evidence: Mapped[str] = mapped_column(Text, default="")
     message: Mapped[str] = mapped_column(Text)
     remediation: Mapped[str] = mapped_column(Text, default="")
 

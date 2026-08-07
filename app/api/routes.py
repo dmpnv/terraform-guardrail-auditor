@@ -9,8 +9,8 @@ from sqlalchemy.orm import Session
 
 from .. import config
 from ..db import get_db
-from ..engine.rules import all_rules
 from ..engine.scanner import run_scan
+from ..engine.yaml_engine import load_rules
 from ..models import Finding, Scan
 from ..schemas import (FindingOut, RuleOut, ScanCreate, ScanOut,
                        ScanSummaryOut, SummaryOut, TopRule, TrendPoint)
@@ -24,14 +24,14 @@ def health():
         "status": "ok",
         "service": config.API_TITLE,
         "version": config.API_VERSION,
-        "rules_loaded": len(all_rules()),
+        "rules_loaded": len(load_rules()),
     }
 
 
 @router.get("/rules", response_model=list[RuleOut], tags=["rules"])
 def list_rules():
-    """The guardrail pack this auditor enforces."""
-    return [RuleOut.model_validate(r) for r in all_rules()]
+    """The guardrail pack as loaded from rules.yaml (rules are data)."""
+    return [RuleOut.model_validate(r) for r in load_rules()]
 
 
 def _resolve_scan_dir(raw: str) -> Path:
@@ -111,14 +111,13 @@ def summary(db: Session = Depends(get_db)):
     top_rules: list[TopRule] = []
     if latest:
         rows = db.execute(
-            select(Finding.rule_id, Finding.rule_title, Finding.severity,
-                   func.count(Finding.id))
+            select(Finding.rule_id, Finding.severity, func.count(Finding.id))
             .where(Finding.scan_id == latest.id)
-            .group_by(Finding.rule_id, Finding.rule_title, Finding.severity)
+            .group_by(Finding.rule_id, Finding.severity)
             .order_by(func.count(Finding.id).desc(), Finding.rule_id)
             .limit(8)
         ).all()
-        top_rules = [TopRule(rule_id=r[0], rule_title=r[1], severity=r[2], count=r[3])
+        top_rules = [TopRule(rule_id=r[0], severity=r[1], count=r[2])
                      for r in rows]
 
     recent = db.scalars(

@@ -389,7 +389,7 @@ function showTip(seg, rule, statusText) {
   const tip = $("tip");
   tip.textContent = "";
   const a = document.createElement("div"); a.className = "t-id"; a.textContent = rule.id;
-  const b = document.createElement("div"); b.className = "t-title"; b.textContent = rule.title;
+  const b = document.createElement("div"); b.className = "t-title"; b.textContent = rule.message || "";
   const c = document.createElement("div"); c.className = "t-status"; c.textContent = statusText;
   tip.append(a, b, c);
   const r = seg.getBoundingClientRect();
@@ -473,10 +473,7 @@ function renderCharts() {
         tooltip: {
           displayColors: false,
           callbacks: {
-            title: (items) => {
-              const r = top[items[0].dataIndex];
-              return `${r.rule_id} — ${r.rule_title}`;
-            },
+            title: (items) => top[items[0].dataIndex].rule_id,
             label: (item) => {
               const r = top[item.dataIndex];
               return `${r.count} finding(s) · ${SEV[r.severity]?.label || r.severity}`;
@@ -589,8 +586,7 @@ function renderTable() {
 
     const tdRule = document.createElement("td");
     const rid = document.createElement("div"); rid.className = "mono"; rid.textContent = f.rule_id;
-    const rt = document.createElement("div"); rt.className = "dimmer"; rt.textContent = f.rule_title;
-    tdRule.append(rid, rt);
+    tdRule.append(rid);
 
     const tdRes = document.createElement("td");
     const ra = document.createElement("div"); ra.className = "mono"; ra.textContent = f.resource_address;

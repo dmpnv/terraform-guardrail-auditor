@@ -1,0 +1,16 @@
+# Guardrail pack — rules are data (SPEC.md, README "Rules are user-editable data").
+# Adding or changing a rule means editing this file only; zero code changes.
+# Closed operator vocabulary: exists, absent, eq, contains, open_port.
+# Override the pack location with GUARDRAIL_RULES_FILE.
+#
+# Slice 1 ships SSH-WORLD; the remaining six spec rules land in slice 2.
+
+- id: SSH-WORLD
+  severity: CRITICAL
+  resource_type: [aws_security_group, aws_security_group_rule]
+  check:
+    - op: open_port
+      port: 22
+      cidr: "0.0.0.0/0"
+  message: "SSH (22) is open to the entire internet (0.0.0.0/0)."
+  remediation: "Restrict the source CIDR to trusted ranges, or remove direct SSH access and use SSM Session Manager or a bastion behind SSO."

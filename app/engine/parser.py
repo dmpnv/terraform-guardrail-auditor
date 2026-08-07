@@ -8,7 +8,11 @@ python-hcl2 8.x quirks handled here:
 - heredoc values arrive as '"<<LABEL\\n...\\nLABEL"' -> unwrapped to the body
 - bare expressions arrive as "${...}" (kept: rules treat ${ as "not a literal")
 - __is_block__ / __comments__ metadata keys are injected -> removed
-- loads() no longer reports line numbers -> restored via a block-header scan
+- loads() no longer reports line numbers -> restored via a bounded scan for
+  block headers (SPEC.md provenance fallback; no hand-built parser). The
+  header scan also yields each block's span (start..end line), which the
+  scanner uses to pull evidence snippets from the source without ever reading
+  outside the block.
 """
 from __future__ import annotations
 
@@ -33,6 +37,7 @@ class TFResource:
     attrs: dict[str, Any]
     file: str
     start_line: Optional[int] = None
+    end_line: Optional[int] = None
 
     @property
     def address(self) -> str:
@@ -44,6 +49,7 @@ class TFResource:
 class ParsedProject:
     resources: list[TFResource] = field(default_factory=list)
     files: list[str] = field(default_factory=list)
+    sources: dict = field(default_factory=dict)     # file -> raw text (evidence scans)
     errors: list[dict] = field(default_factory=list)
 
     def managed(self, *types: str) -> list[TFResource]:
@@ -79,13 +85,22 @@ def _normalize(value: Any) -> Any:
     return value
 
 
-def _line_map(text: str) -> dict:
-    """(mode, type, name) -> 1-based line of the block header."""
-    out: dict = {}
-    for m in _BLOCK_HEADER.finditer(text):
-        key = (m.group(1), m.group(2), m.group(3))
-        out.setdefault(key, text.count("\n", 0, m.start()) + 1)
-    return out
+def _block_spans(text: str) -> dict:
+    """(mode, type, name) -> (start_line, end_line), 1-based inclusive.
+
+    A block's span runs from its header to the line before the next top-level
+    block header (or end of file) — the bound for evidence scans.
+    """
+    headers = [
+        (text.count("\n", 0, m.start()) + 1, (m.group(1), m.group(2), m.group(3)))
+        for m in _BLOCK_HEADER.finditer(text)
+    ]
+    total = text.count("\n") + 1
+    spans: dict = {}
+    for i, (line, key) in enumerate(headers):
+        end = headers[i + 1][0] - 1 if i + 1 < len(headers) else total
+        spans.setdefault(key, (line, end))
+    return spans
 
 
 def parse_files(named_files: Iterable[tuple[str, str]]) -> ParsedProject:
@@ -94,12 +109,13 @@ def parse_files(named_files: Iterable[tuple[str, str]]) -> ParsedProject:
         project.files.append(path)
         if not text.endswith("\n"):
             text += "\n"
+        project.sources[path] = text
         try:
             doc = hcl2.loads(text)
         except Exception as exc:  # lark surfaces many exception types
             project.errors.append({"file": path, "error": str(exc)[:400]})
             continue
-        lines = _line_map(text)
+        spans = _block_spans(text)
         for mode in ("resource", "data"):
             for block in doc.get(mode, []) or []:
                 if not isinstance(block, dict):
@@ -116,13 +132,15 @@ def parse_files(named_files: Iterable[tuple[str, str]]) -> ParsedProject:
                         name = _strip_quotes(name_raw) if isinstance(name_raw, str) else name_raw
                         if isinstance(name, str) and name.startswith("__"):
                             continue
+                        span = spans.get((mode, rtype, name))
                         project.resources.append(TFResource(
                             mode=mode,
                             type=rtype,
                             name=name,
                             attrs=_normalize(body),
                             file=path,
-                            start_line=lines.get((mode, rtype, name)),
+                            start_line=span[0] if span else None,
+                            end_line=span[1] if span else None,
                         ))
     return project
 
