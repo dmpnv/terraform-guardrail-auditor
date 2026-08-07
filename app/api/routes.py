@@ -61,7 +61,8 @@ async def create_scan(
     return run_scan(db, files=named, label=label)
 
 
-@router.get("/scans/{scan_id}", response_model=ScanOut, tags=["scans"])
+@router.get("/scans/{scan_id}", response_model=ScanOut, tags=["scans"],
+            responses={404: {"description": "Scan not found"}})
 def get_scan(scan_id: int, db: Session = Depends(get_db)):
     scan = db.get(Scan, scan_id)
     if not scan:
@@ -69,7 +70,8 @@ def get_scan(scan_id: int, db: Session = Depends(get_db)):
     return scan
 
 
-@router.get("/scans/{scan_id}/findings", response_model=list[FindingOut], tags=["scans"])
+@router.get("/scans/{scan_id}/findings", response_model=list[FindingOut], tags=["scans"],
+            responses={404: {"description": "Scan not found"}})
 def scan_findings(
     scan_id: int,
     severity: Optional[str] = Query(None, description="CRITICAL | HIGH | MEDIUM | LOW"),

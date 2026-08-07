@@ -7,6 +7,7 @@ from fastapi import (Cookie, Depends, FastAPI, File, Form, HTTPException,
                      Query, Request, UploadFile)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
+from fastapi.routing import APIRoute
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -90,6 +91,12 @@ def score_band(score: float) -> dict:
     return {"cls": "band-crit", "label": "Critical"}
 
 
+def _operation_id_from_route_name(route: APIRoute) -> str:
+    """Clean operationIds (create_scan, get_scan, ...) instead of the default
+    name_path_method mangles; derived models follow (Body_create_scan)."""
+    return route.name
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
@@ -106,6 +113,7 @@ app = FastAPI(
         "server-rendered view of the same data."
     ),
     lifespan=lifespan,
+    generate_unique_id_function=_operation_id_from_route_name,
 )
 
 app.add_middleware(

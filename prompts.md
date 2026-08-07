@@ -54,6 +54,11 @@
   TrendPoint / ScanSummaryOut folded into ScanOut), and `samples/`
   (fixtures are the canonical corpus; parser tests rewritten against them).
   A guard test pins the deletions (404/405).
+- **Turn 21 OpenAPI polish:** operationIds are route names
+  (health, list_rules, create_scan, get_scan, scan_findings) via
+  generate_unique_id_function; multipart body schema is Body_create_scan;
+  the two scan lookups declare 404 "Scan not found" in OpenAPI. Verified in
+  openapi.json and in Swagger UI.
 - **Turn 20 fixes:** remediation now joins the source-view annotations
   (muted "Fix:" line beneath rule id + message) — resolves the Turn-19B
   flag, so the deck caveat about "fix beneath" is cleared; and the /docs
@@ -710,3 +715,24 @@
   (light theme); the title attribute confirmed in the served HTML via curl
   (native title tooltips are OS overlays that screenshots don't capture —
   stated honestly rather than claimed).
+
+### Turn 21 — 2026-08-07 18:34 (+0200)
+
+**Prompt (verbatim):**
+
+> Two small fixes, one turn, one commit. 
+> 1) API docs naming: set a generate_unique_id_function  on the FastAPI app (route.name) so operationIds become create_scan, get_scan, scan_findings, health, list_rules and the multipart schema shows as Body_create_scan.  2) Document the 404s: GET /scans/{id} and  GET /scans/{id}/findings must declare  responses 404 "Scan not found" in OpenAPI.   Re-check /docs in the browser after both.
+
+- **Intent:** clean OpenAPI operationIds via route names, and declare the
+  404s on the two scan lookups; re-check /docs.
+- **What changed:** main.py — `_operation_id_from_route_name(route) ->
+  route.name` wired as `generate_unique_id_function` on the app. routes.py
+  — `responses={404: {"description": "Scan not found"}}` on
+  GET /scans/{scan_id} and GET /scans/{scan_id}/findings. No behavior
+  change to any endpoint.
+- **How verified:** pytest **35/35**; openapi.json inspected —
+  operationIds exactly ['create_scan', 'get_scan', 'health', 'list_rules',
+  'scan_findings'], Body_create_scan present in components.schemas, both
+  404 descriptions "Scan not found"; /docs re-checked in Chrome — clean
+  operation names, Body_create_scan in the schema list, and Get Scan's
+  responses table showing 200 / 404 Scan not found / 422.
