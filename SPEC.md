@@ -12,8 +12,8 @@ Unix. No Docker, no containers.
 | # | id | severity | resource_type | check (fixed operators only) |
 |---|---|---|---|---|
 | 1 | S3-PUBLIC | CRITICAL | aws_s3_bucket, aws_s3_bucket_acl, aws_s3_bucket_policy | `acl eq [public-read, public-read-write]` OR `policy contains "Principal": "*"` |
-| 2 | SSH-WORLD | CRITICAL | aws_security_group, aws_security_group_rule | `open_port(22, 0.0.0.0/0)` |
-| 3 | RDP-WORLD | CRITICAL | aws_security_group, aws_security_group_rule | `open_port(3389, 0.0.0.0/0)` |
+| 2 | SSH-WORLD | CRITICAL | aws_security_group, aws_security_group_rule | `open_port(22, 0.0.0.0/0)` OR `open_port(22, ::/0)` |
+| 3 | RDP-WORLD | CRITICAL | aws_security_group, aws_security_group_rule | `open_port(3389, 0.0.0.0/0)` OR `open_port(3389, ::/0)` |
 | 4 | S3-NO-ENCRYPTION | MEDIUM | aws_s3_bucket | `server_side_encryption_configuration absent` (companion-aware, see below) |
 | 5 | EBS-NO-ENCRYPTION | HIGH | aws_ebs_volume | `encrypted absent` OR `encrypted eq false` |
 | 6 | RDS-PUBLIC | HIGH | aws_db_instance | `publicly_accessible eq true` |
@@ -28,6 +28,11 @@ a resource **fails if any clause matches**. Operator vocabulary is closed:
 - `open_port {port, cidr}` — an ingress definition whose port range covers
   `port` (or protocol `-1`/`all`) with `cidr` in its sources
 No eval, no expression language. An unknown operator in YAML is a startup error.
+
+*(Amendment, Turn 18: the IPv6 `::/0` clauses on rules 2 and 3 were added as
+a pure `rules.yaml` data change — the engine already read `ipv6_cidr_blocks`
+and `cidr_ipv6`, so closing the gap required zero engine changes. An IPv6
+variant fixture covers it.)*
 
 **Rules are user-editable data: adding or changing a rule means editing
 `rules.yaml` and nothing else — zero code changes.** The engine loads the pack
@@ -180,6 +185,6 @@ no remotes, no push.
 Post-MVP (time-budgeted): short Marp slide deck on the result, on request.
 
 ## Out of scope
-CloudFormation, `terraform plan` JSON, `::/0` variants, module resolution,
+CloudFormation, `terraform plan` JSON, module resolution,
 cross-file references beyond the S3 companion rule, auth/multi-user, waivers,
 Postgres, Docker, any cloud usage.

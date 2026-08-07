@@ -15,9 +15,8 @@ def test_pack_loads_ssh_world():
     r = rules["SSH-WORLD"]
     assert r.severity == "CRITICAL"
     assert r.resource_type == ("aws_security_group", "aws_security_group_rule")
-    assert r.check[0].op == "open_port"
-    assert r.check[0].port == 22
-    assert r.check[0].cidr == "0.0.0.0/0"
+    assert all(c.op == "open_port" for c in r.check)
+    assert [(c.port, c.cidr) for c in r.check] == [(22, "0.0.0.0/0"), (22, "::/0")]
 
 
 def test_loader_rejects_unknown_operator(tmp_path):

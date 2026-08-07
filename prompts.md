@@ -54,6 +54,14 @@
   TrendPoint / ScanSummaryOut folded into ScanOut), and `samples/`
   (fixtures are the canonical corpus; parser tests rewritten against them).
   A guard test pins the deletions (404/405).
+- **IPv6 gap closed as a DATA change (Turn 18):** spec amended first
+  (SSH/RDP-WORLD checks gain `::/0` clauses; `::/0` removed from Out of
+  scope and from README Known limitations). Two `open_port` clauses added
+  in rules.yaml; **zero engine changes were needed** — the engine already
+  read `ipv6_cidr_blocks`/`cidr_ipv6`. Proven live: the running server
+  (started before the edit, rules loaded per scan) flagged
+  `ipv6_cidr_blocks = ["::/0"]` at line 12 without a restart. New fixture
+  ssh_world_ipv6.tf (world-open v6 = finding; scoped v6 range = clean).
 - **UI polish (Turn 17, cosmetic only — no spec change):** right findings
   column is a fixed-layout 4-column table (severity/rule/resource/location,
   Detail+Fix dropped there since the left annotations carry them; the
@@ -559,3 +567,28 @@
   **11 scans** — labels 58.4/100/35.7/21.3/35.7/21.3/75/100/0/40.5/85.1
   all legible, no collisions, so the documented ≤12 threshold stands
   unchanged. pytest **33/33**.
+
+### Turn 18 — 2026-08-07 17:41 (+0200)
+
+**Prompt (verbatim):**
+
+> Then a separate small turn, own commit - close the IPv6 world-open gap as a data change: spec amendment first (SSH-WORLD and RDP-WORLD check clauses gain the IPv6 variant; remove ::/0 from Out of scope; it must NOT appear in the README Known limitations). Then add an `open_port {port, cidr: "::/0"}` clause to SSH-WORLD and RDP-WORLD in rules.yaml - the engine already reads ipv6_cidr_blocks and cidr_ipv6, so this is YAML-only. Fixtures: one SG open via ipv6_cidr_blocks = ["::/0"] (finding expected) and one with a scoped IPv6 range (no finding); update the affected test triples. Note in prompts.md that closing the gap required zero engine changes - worth one line in the README rules section too.
+
+- **Intent:** close the IPv6 world-open gap purely as rule data, spec first,
+  own commit.
+- **What changed:** SPEC.md — rules 2/3 check cells now carry the `::/0`
+  variant, an amendment note sits above the rules-are-data paragraph, and
+  `::/0` left the Out-of-scope list. rules.yaml — SSH-WORLD and RDP-WORLD
+  each gained an `open_port {port, cidr: "::/0"}` clause; messages updated
+  to "(0.0.0.0/0 or ::/0)". New fixture `ssh_world_ipv6.tf` (world-open v6
+  bastion = one finding at line 12; scoped `2001:db8:1234::/48` internal SG
+  = clean) + its exact-triple test; the pack-shape test now asserts both
+  clauses of SSH-WORLD. README — IPv6 bullet removed from Known
+  limitations, pack table rows updated, and a "case in point" line under
+  the rules-are-data policy: **closing the gap required zero engine
+  changes.** No Python was touched anywhere in this turn.
+- **How verified:** pytest **34/34**; live proof of rules-as-data — the
+  dev server, started before the YAML edit and never restarted, scanned
+  the new fixture and flagged `ipv6_cidr_blocks = ["::/0"]` with full
+  provenance (SSH-WORLD, aws_security_group.v6_bastion, line 12) while
+  passing the scoped range; remotes still absent.

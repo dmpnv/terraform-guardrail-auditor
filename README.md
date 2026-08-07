@@ -115,8 +115,8 @@ with a note — never an error.
 | ID | Severity | Guardrail |
 |---|---|---|
 | S3-PUBLIC | CRITICAL | No public S3 buckets (inline ACL, `aws_s3_bucket_acl`, or a bucket policy with `"Principal": "*"`) |
-| SSH-WORLD | CRITICAL | SSH (22) never open to 0.0.0.0/0 |
-| RDP-WORLD | CRITICAL | RDP (3389) never open to 0.0.0.0/0 |
+| SSH-WORLD | CRITICAL | SSH (22) never open to 0.0.0.0/0 or ::/0 |
+| RDP-WORLD | CRITICAL | RDP (3389) never open to 0.0.0.0/0 or ::/0 |
 | S3-NO-ENCRYPTION | MEDIUM | Buckets declare server-side encryption (inline or companion resource) |
 | EBS-NO-ENCRYPTION | HIGH | EBS volumes encrypted at rest (`encrypted` missing or false fails) |
 | RDS-PUBLIC | HIGH | RDS instances not publicly accessible |
@@ -126,6 +126,9 @@ with a note — never an error.
 `rules.yaml` — with zero code changes; the engine loads the pack at startup
 from a configurable path (`GUARDRAIL_RULES_FILE`). A dedicated test proves it:
 a newly added YAML rule is picked up by the engine and produces a finding.
+Case in point: the IPv6 `::/0` open-to-world variants were closed later as a
+pure `rules.yaml` data change — **zero engine changes** (the engine already
+read `ipv6_cidr_blocks` / `cidr_ipv6`; two YAML clauses did the rest).
 **Data contract — `companion_type` on `absent`:** `absent <attr>` normally
 flags a resource when `<attr>` is missing. With `companion_type: <type>` the
 check instead **passes** if the scan contains a resource of `<type>` that is
@@ -207,8 +210,6 @@ plus the no-stored-source fallback).
 
 ## Known limitations
 
-- **IPv6:** the open-to-world checks match `0.0.0.0/0` only — `::/0`
-  open-to-world variants are not detected.
 - **Single-scan, single-file semantics:** module resolution and cross-file
   references are out of scope; the only cross-resource link the engine
   follows is the S3 encryption companion

@@ -24,7 +24,10 @@
     - op: open_port
       port: 22
       cidr: "0.0.0.0/0"
-  message: "SSH (22) is open to the entire internet (0.0.0.0/0)."
+    - op: open_port
+      port: 22
+      cidr: "::/0"
+  message: "SSH (22) is open to the entire internet (0.0.0.0/0 or ::/0)."
   remediation: "Restrict the source CIDR to trusted ranges, or remove direct SSH access and use SSM Session Manager or a bastion behind SSO."
 
 - id: RDP-WORLD
@@ -34,7 +37,10 @@
     - op: open_port
       port: 3389
       cidr: "0.0.0.0/0"
-  message: "RDP (3389) is open to the entire internet (0.0.0.0/0)."
+    - op: open_port
+      port: 3389
+      cidr: "::/0"
+  message: "RDP (3389) is open to the entire internet (0.0.0.0/0 or ::/0)."
   remediation: "Restrict the source CIDR to trusted ranges, or use a bastion or Fleet Manager instead of direct RDP exposure."
 
 - id: S3-NO-ENCRYPTION

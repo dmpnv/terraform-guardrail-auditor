@@ -48,6 +48,13 @@ def test_rdp_world():
     assert "0.0.0.0/0" in findings[0]["evidence"]
 
 
+def test_ssh_world_ipv6_variant():
+    """Turn-18 amendment: ::/0 covered via a YAML-only clause addition."""
+    findings, _ = scan_fixture("ssh_world_ipv6.tf")
+    assert triples(findings) == [("SSH-WORLD", "aws_security_group.v6_bastion", 12)]
+    assert "::/0" in findings[0]["evidence"]
+
+
 def test_s3_no_encryption():
     findings, _ = scan_fixture("s3_no_encryption.tf")
     assert triples(findings) == [("S3-NO-ENCRYPTION", "aws_s3_bucket.logs", 3)]
