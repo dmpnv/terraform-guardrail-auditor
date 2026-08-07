@@ -37,8 +37,10 @@
   bucket + its aws_s3_bucket_server_side_encryption_configuration in one file
   ⇒ zero findings for rule 4 (slice 2). **Interpretations 1 and 3 and the
   overall spec still await approval.**
-- **MVP milestone: REACHED — Turn 15, 2026-08-07 17:21 (+0200), elapsed
-  2:35 from T0, well inside the 4–6h goal.** All four slices delivered per
+- **MVP milestone: REACHED — Turn 15, commit f692820 at 2026-08-07 17:20:26
+  (+0200), elapsed 2:33 from T0, well inside the 4–6h goal.** (This line
+  first carried a pre-commit estimate of 17:21/2:35 — corrected to the
+  actual clock reading immediately, in its own commit.) All four slices delivered per
   the approved SPEC.md (v2 + amendments Turns 13–14); 33/33 tests green;
   every spec endpoint verified live; off-spec surface deleted.
 - **Slice 4 DELIVERED (Turn 15):** exact pins for every dependency
