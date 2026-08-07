@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import (APIRouter, Depends, File, Form, HTTPException, Query,
-                     Response, UploadFile)
-from sqlalchemy import func, select
+                     UploadFile)
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .. import config
@@ -12,8 +12,7 @@ from ..db import get_db
 from ..engine.scanner import run_scan
 from ..engine.yaml_engine import load_rules
 from ..models import Finding, Scan
-from ..schemas import (FindingOut, RuleOut, ScanOut, ScanSummaryOut,
-                       SummaryOut, TopRule, TrendPoint)
+from ..schemas import FindingOut, RuleOut, ScanOut
 
 router = APIRouter()
 
@@ -62,18 +61,6 @@ async def create_scan(
     return run_scan(db, files=named, label=label)
 
 
-@router.get("/scans", response_model=list[ScanSummaryOut], tags=["scans"])
-def list_scans(
-    limit: int = Query(25, ge=1, le=200),
-    offset: int = Query(0, ge=0),
-    db: Session = Depends(get_db),
-):
-    stmt = (select(Scan)
-            .order_by(Scan.created_at.desc(), Scan.id.desc())
-            .limit(limit).offset(offset))
-    return db.scalars(stmt).all()
-
-
 @router.get("/scans/{scan_id}", response_model=ScanOut, tags=["scans"])
 def get_scan(scan_id: int, db: Session = Depends(get_db)):
     scan = db.get(Scan, scan_id)
@@ -86,7 +73,7 @@ def get_scan(scan_id: int, db: Session = Depends(get_db)):
 def scan_findings(
     scan_id: int,
     severity: Optional[str] = Query(None, description="CRITICAL | HIGH | MEDIUM | LOW"),
-    rule_id: Optional[str] = Query(None, examples=["GR-NET-001"]),
+    rule_id: Optional[str] = Query(None, examples=["SSH-WORLD"]),
     db: Session = Depends(get_db),
 ):
     if not db.get(Scan, scan_id):
@@ -97,50 +84,3 @@ def scan_findings(
     if rule_id:
         stmt = stmt.where(Finding.rule_id == rule_id)
     return db.scalars(stmt.order_by(Finding.severity_rank, Finding.id)).all()
-
-
-@router.delete("/scans/{scan_id}", status_code=204, tags=["scans"])
-def delete_scan(scan_id: int, db: Session = Depends(get_db)):
-    scan = db.get(Scan, scan_id)
-    if not scan:
-        raise HTTPException(status_code=404, detail="Scan not found")
-    db.delete(scan)
-    db.commit()
-    return Response(status_code=204)
-
-
-@router.get("/summary", response_model=SummaryOut, tags=["dashboard"])
-def summary(db: Session = Depends(get_db)):
-    """Aggregated posture for the dashboard: latest scan + score trend."""
-    total_scans = db.scalar(select(func.count(Scan.id))) or 0
-    total_findings = db.scalar(select(func.count(Finding.id))) or 0
-    latest = db.scalars(
-        select(Scan).order_by(Scan.created_at.desc(), Scan.id.desc()).limit(1)
-    ).first()
-
-    top_rules: list[TopRule] = []
-    if latest:
-        rows = db.execute(
-            select(Finding.rule_id, Finding.severity, func.count(Finding.id))
-            .where(Finding.scan_id == latest.id)
-            .group_by(Finding.rule_id, Finding.severity)
-            .order_by(func.count(Finding.id).desc(), Finding.rule_id)
-            .limit(8)
-        ).all()
-        top_rules = [TopRule(rule_id=r[0], severity=r[1], count=r[2])
-                     for r in rows]
-
-    recent = db.scalars(
-        select(Scan).order_by(Scan.created_at.desc(), Scan.id.desc()).limit(50)
-    ).all()
-    trend = [TrendPoint(id=s.id, label=s.label or f"scan #{s.id}",
-                        created_at=s.created_at, score=s.score)
-             for s in reversed(recent)]
-
-    return SummaryOut(
-        total_scans=total_scans,
-        total_findings=total_findings,
-        latest=ScanSummaryOut.model_validate(latest) if latest else None,
-        top_rules=top_rules,
-        trend=trend,
-    )

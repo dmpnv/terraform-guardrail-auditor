@@ -37,7 +37,21 @@
   bucket + its aws_s3_bucket_server_side_encryption_configuration in one file
   ⇒ zero findings for rule 4 (slice 2). **Interpretations 1 and 3 and the
   overall spec still await approval.**
-- MVP milestone: **not yet reached**.
+- **MVP milestone: REACHED — Turn 15, 2026-08-07 17:21 (+0200), elapsed
+  2:35 from T0, well inside the 4–6h goal.** All four slices delivered per
+  the approved SPEC.md (v2 + amendments Turns 13–14); 33/33 tests green;
+  every spec endpoint verified live; off-spec surface deleted.
+- **Slice 4 DELIVERED (Turn 15):** exact pins for every dependency
+  (fastapi 0.141.1, uvicorn[standard] 0.52.1, SQLAlchemy 2.0.51,
+  pytest 9.1.1, httpx 0.28.1 joining the four already-pinned); MIT LICENSE;
+  README completed per spec (CloudFormation-out-of-scope + no-cloud-by-design
+  statements, Windows AND Unix commands for run and test, dashboard section,
+  accurate test description, License section, files table in the diagram).
+  **Deleted:** `GET /api/v1/scans` (list), `DELETE /api/v1/scans/{id}`,
+  `GET /api/v1/summary` (with their now-unused schemas SummaryOut / TopRule /
+  TrendPoint / ScanSummaryOut folded into ScanOut), and `samples/`
+  (fixtures are the canonical corpus; parser tests rewritten against them).
+  A guard test pins the deletions (404/405).
 - Draft leftovers still live outside git: `.venv/`, `data/guardrail.db`
   (both gitignored), and a draft uvicorn server still serving on
   127.0.0.1:8011 from Turn 1.
@@ -446,3 +460,33 @@
   (highlighted lines 5/7/17 with annotations, per-file headers 40.5 and
   0), and navigating to #src-score-formula-tf-L7 jumped to and outlined
   the flagged line. Zero JS, zero CDN, escaped text only — preserved.
+
+### Turn 15 — 2026-08-07 17:17 (+0200)
+
+**Prompt (verbatim):**
+
+> Slice 4: go
+
+- **Intent:** finish the MVP — README/LICENSE/pins polish and the remaining
+  off-spec deletions.
+- **What changed:** requirements.txt fully pinned from the working venv;
+  MIT LICENSE added; README brought to spec (scope statement: CloudFormation
+  out of scope, no cloud resources by design; Unix + Windows run and test
+  commands; dashboard section; 33-test description; License section;
+  draft-endpoints note removed). **Deletions, each noted here per protocol:**
+  `GET /api/v1/scans` list endpoint; `DELETE /api/v1/scans/{id}`;
+  `GET /api/v1/summary`; schemas SummaryOut, TopRule, TrendPoint (unused
+  after the endpoint deletions) with ScanSummaryOut folded into ScanOut;
+  `samples/` directory (fixtures are the canonical corpus — parser tests
+  rewritten against score_formula.tf and clean.tf). Added a guard test
+  asserting the deleted endpoints return 404/405. test_api's summary
+  assertion became a GET /scans/{id} round-trip. (Process note, honestly
+  logged: this Turn-15 entry was first inserted between Turns 13 and 14 by
+  mistake and moved here immediately — chronology restored before commit;
+  no committed state ever had the wrong order.)
+- **How verified:** pytest **33/33**; server restarted — every README curl
+  example executed verbatim (health, 7 rules, multipart POST created scan
+  #7, GET /scans/1, severity filter), deletions confirmed live
+  (/summary 404, GET /scans 405, DELETE 405), dashboard and /docs 200.
+  **MVP milestone reached** and recorded in Decisions. Remotes: none, as
+  always.

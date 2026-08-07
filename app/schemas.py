@@ -30,7 +30,7 @@ class FindingOut(BaseModel):
     remediation: str
 
 
-class ScanSummaryOut(BaseModel):
+class ScanOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -47,14 +47,11 @@ class ScanSummaryOut(BaseModel):
     findings_count: int
     severity_counts: dict
     parse_errors: list = []
+    findings: list[FindingOut] = []
 
     @field_serializer("created_at")
     def _ser_created_at(self, v: datetime) -> str:
         return _iso_utc(v)
-
-
-class ScanOut(ScanSummaryOut):
-    findings: list[FindingOut] = []
 
 
 class RuleOut(BaseModel):
@@ -66,28 +63,3 @@ class RuleOut(BaseModel):
     resource_type: list
     message: str
     remediation: str
-
-
-class TopRule(BaseModel):
-    rule_id: str
-    severity: str
-    count: int
-
-
-class TrendPoint(BaseModel):
-    id: int
-    label: str
-    created_at: datetime
-    score: float
-
-    @field_serializer("created_at")
-    def _ser_created_at(self, v: datetime) -> str:
-        return _iso_utc(v)
-
-
-class SummaryOut(BaseModel):
-    total_scans: int
-    total_findings: int
-    latest: Optional[ScanSummaryOut]
-    top_rules: list[TopRule]
-    trend: list[TrendPoint]

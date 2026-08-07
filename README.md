@@ -5,6 +5,11 @@ guardrail pack, persists every scan to a free database (SQLite), and visualizes
 security posture on a built-in dashboard. Pure static analysis: no terraform
 binary, no cloud credentials, nothing gets deployed.
 
+**Scope:** Terraform files only — **CloudFormation is explicitly out of
+scope.** And a design constraint worth stating plainly: **no cloud resources
+were used by design**, at any point — the auditor reads text, and nothing
+leaves your machine.
+
 ```
 .tf files (multipart upload)
         │
@@ -12,8 +17,8 @@ binary, no cloud credentials, nothing gets deployed.
 FastAPI  /api/v1  ──►  Rule engine (python-hcl2 parse → rules.yaml, 7 guardrails)
         │                          │
         ▼                          ▼
-OpenAPI docs (/docs)      SQLite via SQLAlchemy (data/guardrail.db)
-                                   │
+OpenAPI docs (/docs)      SQLite via SQLAlchemy (data/guardrail.db:
+                                   │            scans · findings · files)
                                    ▼
                      Dashboard at /  (server-rendered, zero JS / zero CDN)
 ```
@@ -26,12 +31,22 @@ OpenAPI docs (/docs)      SQLite via SQLAlchemy (data/guardrail.db)
 - **Severity-weighted scoring** — failing a CRITICAL check costs 10× a LOW one;
   exact formula and a worked example under *Risk score* below.
 
-## Quickstart (Windows PowerShell)
+## Quickstart
+
+Windows (PowerShell):
 
 ```powershell
 python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt
 .venv\Scripts\python -m uvicorn app.main:app --port 8011
+```
+
+macOS / Linux:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m uvicorn app.main:app --port 8011
 ```
 
 - Dashboard: <http://127.0.0.1:8011>
@@ -57,9 +72,6 @@ Spec endpoints (`SPEC.md`):
 | `GET`  | `/api/v1/scans/{id}` | One scan with its scores |
 | `GET`  | `/api/v1/scans/{id}/findings` | Findings, filterable by `severity` |
 
-Draft-only endpoints still present until slices 3–4 remove them:
-`GET /api/v1/scans` (list), `DELETE /api/v1/scans/{id}`, `GET /api/v1/summary`.
-
 ### curl examples — every endpoint
 
 One command per line. On Unix shells type `curl`; in Windows PowerShell type
@@ -82,8 +94,21 @@ curl -s http://127.0.0.1:8011/api/v1/scans/1
 curl -s "http://127.0.0.1:8011/api/v1/scans/1/findings?severity=CRITICAL"
 ```
 
-The dashboard is not an API endpoint — open <http://127.0.0.1:8011/> in a
-browser.
+## Dashboard
+
+One server-rendered page at `/` — **zero JavaScript, zero CDN, system fonts,
+inline SVG only; nothing leaves your machine**:
+
+- upload form (multiple `.tf` files + optional label, Post/Redirect/Get —
+  same limits as the API);
+- risk score with a color grade, severity badges, per-file scores;
+- an **annotated source view**: your uploaded files with line numbers,
+  finding lines highlighted in the severity color with the rule and message
+  beneath, and the findings list linking straight to the flagged line;
+- severity filter (plain links) and a score trend across scans as inline SVG.
+
+Scans recorded before source storage existed simply show the findings list
+with a note — never an error.
 
 ## Guardrail pack (7 rules, defined in `rules.yaml`)
 
@@ -156,11 +181,19 @@ by `tests/test_score.py`.
 ## Tests
 
 ```powershell
-.venv\Scripts\python -m pytest -q
+.venv\Scripts\python -m pytest -q      # Windows
+```
+```bash
+.venv/bin/python -m pytest -q          # macOS / Linux
 ```
 
-11 tests: engine unit tests (the insecure sample must trip **every** rule; the
-secure sample must score 100.0) plus API round-trips through a throwaway DB.
+33 tests, all against a throwaway database: golden fixtures asserting exact
+(rule, resource, line) findings for every guardrail, the companion negative
+fixture (bucket + linked SSE config ⇒ zero findings for S3-NO-ENCRYPTION),
+the rules-are-data extensibility proof (a YAML-appended rule fires with zero
+code changes), the hand-computed 40.5 score-formula fixture, API round-trips,
+and dashboard end-to-end (form upload → redirect → annotated source render,
+plus the no-stored-source fallback).
 
 ## Configuration
 
@@ -171,6 +204,10 @@ secure sample must score 100.0) plus API round-trips through a throwaway DB.
 | `GUARDRAIL_DATA_DIR` | `./data` | Where the default SQLite file lives |
 | `GUARDRAIL_MAX_FILES` | `500` | Max `.tf` files per scan |
 | `GUARDRAIL_MAX_FILE_BYTES` | `1000000` | Per-file size cap |
+
+## License
+
+MIT — see `LICENSE`.
 
 ## Roadmap
 

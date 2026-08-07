@@ -49,9 +49,10 @@ def test_multipart_scan_roundtrip(client):
     assert r2.status_code == 200
     assert len(r2.json()) >= 1
 
-    r3 = client.get("/api/v1/summary")
+    r3 = client.get(f"/api/v1/scans/{sid}")
     assert r3.status_code == 200
-    assert r3.json()["latest"]["id"] == sid
+    assert r3.json()["id"] == sid
+    assert r3.json()["findings_count"] == len(r3.json()["findings"])
 
 
 def test_multi_file_upload_gets_per_file_scores(client):
@@ -75,6 +76,13 @@ def test_multi_file_upload_gets_per_file_scores(client):
 def test_scan_without_files_is_422(client):
     r = client.post("/api/v1/scans", data={"label": "empty"})
     assert r.status_code == 422
+
+
+def test_off_spec_endpoints_are_gone(client):
+    """Slice 4 deletions: only the five spec endpoints remain."""
+    assert client.get("/api/v1/summary").status_code == 404
+    assert client.get("/api/v1/scans").status_code == 405       # POST-only path
+    assert client.delete("/api/v1/scans/1").status_code == 405  # GET-only path
 
 
 def test_dashboard_served(client):

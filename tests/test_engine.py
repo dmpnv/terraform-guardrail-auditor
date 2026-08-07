@@ -1,34 +1,42 @@
 """Parser tests: normalization, provenance spans, parse-error resilience.
 
-The draft's 11-rule code-pack tests were removed in slice 1 — the YAML engine
-supersedes the Python pack (deleted entirely in slice 2), and rule coverage
-now lives in the golden-fixture tests.
+Run against the golden fixtures (samples/ was deleted in slice 4 — fixtures
+are the canonical corpus).
 """
-from app import config
-from app.engine.parser import parse_files, parse_path
+from pathlib import Path
+
+from app.engine.parser import parse_files
 from app.engine.scanner import evaluate
 
-SAMPLES = config.BASE_DIR / "samples"
+FIXTURES = Path(__file__).parent / "fixtures"
 
 
-def test_insecure_sample_parses_with_spans():
-    project = parse_path(SAMPLES / "insecure")
+def _parse_fixture(name):
+    content = (FIXTURES / name).read_text(encoding="utf-8")
+    return parse_files([(name, content)])
+
+
+def test_fixture_parses_with_spans():
+    project = _parse_fixture("score_formula.tf")
     assert not project.errors
-    assert len(project.managed()) == 6
+    assert len(project.managed()) == 3
     for res in project.resources:
         assert isinstance(res.start_line, int) and res.start_line >= 1
         assert isinstance(res.end_line, int) and res.end_line >= res.start_line
     sg = project.managed("aws_security_group")[0]
     assert sg.address == "aws_security_group.edge"
     ingress = sg.attrs["ingress"]
-    assert isinstance(ingress, list) and len(ingress) == 2
+    assert isinstance(ingress, list)
     assert ingress[0]["cidr_blocks"] == ["0.0.0.0/0"]
 
 
-def test_secure_sample_parses():
-    project = parse_path(SAMPLES / "secure")
+def test_clean_fixture_parses_all_resource_types():
+    project = _parse_fixture("clean.tf")
     assert not project.errors
-    assert len(project.managed()) == 9
+    assert len(project.managed()) == 6
+    types = {r.type for r in project.managed()}
+    assert "aws_s3_bucket" in types
+    assert "aws_iam_policy" in types
 
 
 def test_sources_retained_for_evidence():
