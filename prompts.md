@@ -54,6 +54,21 @@
   TrendPoint / ScanSummaryOut folded into ScanOut), and `samples/`
   (fixtures are the canonical corpus; parser tests rewritten against them).
   A guard test pins the deletions (404/405).
+- **Deck preparation (Turn 19C, note only):** when the Marp deck is
+  requested, include a "How it works" slide tightened to: one
+  server-rendered page — zero client JS, zero CDN, runs offline from a
+  fresh clone · upload via form or API — one shared pipeline, same limits
+  (multipart POST /api/v1/scans) · annotated source — every finding on its
+  own line: file:line, evidence, fix beneath · posture at a glance —
+  severity tiles + score trend across persisted scans (SQLite) · rules are
+  data (rules.yaml) — new guardrail = YAML edit, zero code changes, proven
+  live by the IPv6 clauses and the extensibility test · every view is a
+  URL — filter = query param, code line = anchor, theme = cookie
+  (System/Dark/Light). Caveats to reconcile at deck time (from Turn 19B
+  fact-check): annotations currently show rule + message, not fix — either
+  add the fix line to annotations first or say "rule + message beneath";
+  and the theme is cookie state, not URL state — phrase that bullet
+  accordingly.
 - **Theming shipped (Turn 19A):** palette in CSS custom properties; dark +
   light themes; System/Dark/Light switcher as link chips (active state = ✓
   glyph + filled chip, not color alone); System default via
@@ -656,3 +671,14 @@
   fix line joins the annotations — a two-line template change.
 - **How verified:** each claim traced to code (routes/main/scanner);
   pytest **35/35** unchanged (doc-only diff).
+
+**Part C — deck preparation note (prompts.md only, per instruction):**
+
+- **Intent:** store the one-slide "How it works" content for the upcoming
+  Marp deck; no build work, no commit beyond prompts.md.
+- **What changed:** the slide content and its two reconcile-at-deck-time
+  caveats recorded in the Decisions section above. Nothing else touched.
+  **The deck itself is NOT started** — waiting for the user's next
+  message, per instruction.
+- **How verified:** n/a (log-only); working tree contains only prompts.md
+  changes for this commit.
