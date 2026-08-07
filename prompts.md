@@ -1,17 +1,21 @@
 # Prompt Audit Log — Enterprise Security Guardrail Auditor
 
-## SESSION CLOSED — 2026-08-07 18:56 (+0200)
+## SESSION CLOSED — final close 2026-08-07 19:34 (+0200)
 
-- **Total elapsed: 4:10** (T0 2026-08-07T14:46:28+02:00 → close, system
-  clock). MVP was reached at **2:33** against the 4–6h goal; everything
+- **Total elapsed: 4:48** (T0 2026-08-07T14:46:28+02:00 → final close,
+  system clock). First close at 18:56 / 4:10 (recorded in Turn 23); one
+  follow-up session added the deck screenshots (Turn 24); this final close
+  is Turn 25. MVP was reached at **2:33** against the 4–6h goal; everything
   after was user-directed post-MVP work (theming, annotated source view,
-  IPv6 data-change, OpenAPI polish, the deck), all inside the 16h cap.
-- Final state: 35/35 tests green on the closing run; 27 commits including
-  this closure; working tree clean; **no remotes were ever created and
-  nothing was ever pushed** — the repository is local until the user
-  publishes it. Deliverables: the auditor (app/, rules.yaml, tests/),
-  SPEC.md (approved + amendments), README.md, LICENSE (MIT),
-  deck/deck.md (PDF rendered locally, gitignored), and this log.
+  IPv6 data-change, OpenAPI polish, the deck with live screenshots), all
+  inside the 16h cap.
+- Final state: 35/35 tests green on the closing run; **29 commits**
+  including this closure; working tree clean; **no remotes were ever
+  created and nothing was ever pushed** — the repository is local until the
+  user publishes it. Deliverables: the auditor (app/, rules.yaml, tests/),
+  SPEC.md (approved + amendments), README.md, LICENSE (MIT), deck/deck.md
+  with real captures in deck/assets/ (PDF rendered locally, gitignored),
+  and this log.
 - The dev server on 127.0.0.1:8011 was stopped at close; restart per the
   README quickstart.
 - **Follow-up session (Turn 24, same T0):** real headless-Chrome screenshots
@@ -852,3 +856,20 @@
   defect was caught visually, diagnosed via the built HTML plus a
   zero-offset probe, fixed, and re-verified; all assets ≤147 KB; 11-slide
   PDF builds cleanly; server stopped at the end.
+
+### Turn 25 — 2026-08-07 19:34 (+0200) — final session close
+
+**Prompt (verbatim):**
+
+> Wrap up again: close the log, final commit, report total elapsed
+
+- **Intent:** re-close the log after the follow-up session, final commit,
+  report total elapsed.
+- **What changed:** the SESSION CLOSED header updated to the final close
+  (total 4:48, 29 commits, deck now carries live captures); the first
+  close remains recorded in Turn 23 — nothing reordered. This closure is
+  the final commit.
+- **How verified:** closing pytest run **35/35**; working tree clean and
+  dev server already stopped before this closure; `git remote -v` empty —
+  nothing was ever pushed; total elapsed computed from the system clock
+  against the fixed T0.
