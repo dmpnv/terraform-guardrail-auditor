@@ -35,8 +35,8 @@ from a configurable path (`GUARDRAIL_RULES_FILE`, default `rules.yaml`) at
 startup. The README states this policy explicitly, and a dedicated test proves
 it (see Tests).
 
-**Interpretations** (parameterizations, not new operators — 3 still needs
-your sign-off):
+**Interpretations** (parameterizations, not new operators — **all three
+accepted**, Turns 5/8/9):
 1. **ACCEPTED (Turn 8):** `resource_type` and clause values may be **lists**
    (list = any-of) — needed for "ACL **or** policy" and the two public ACL
    values.
@@ -52,8 +52,10 @@ your sign-off):
    Condition two: a **negative fixture** — a bucket plus its
    `aws_s3_bucket_server_side_encryption_configuration` in the same file must
    produce **zero findings for rule 4** (see Tests).
-3. Severity assignments above (3× CRITICAL, 3× HIGH, 1× MEDIUM) are my
-   proposal — say the word to re-grade.
+3. **ACCEPTED (Turn 9), as proposed:** severity assignments above —
+   3× CRITICAL (S3-PUBLIC, SSH-WORLD, RDP-WORLD), 3× HIGH
+   (EBS-NO-ENCRYPTION, RDS-PUBLIC, IAM-WILDCARD), 1× MEDIUM
+   (S3-NO-ENCRYPTION).
 
 ## Findings & provenance
 Every finding carries: `file, line, resource_address, rule_id, severity,

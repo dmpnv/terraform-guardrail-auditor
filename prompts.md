@@ -50,8 +50,12 @@
   README references `tests/fixtures/ssh_world.tf` — slice 1 must use exactly
   that fixture filename.
 - **Interpretation 1 ACCEPTED (Turn 8)** — list values for `resource_type`
-  and clause values, any-of semantics. **Still outstanding: interpretation 3
-  (severity grades) and overall spec approval.**
+  and clause values, any-of semantics.
+- **Interpretation 3 ACCEPTED as proposed (Turn 9)** — severities: CRITICAL
+  for S3-PUBLIC / SSH-WORLD / RDP-WORLD, HIGH for EBS-NO-ENCRYPTION /
+  RDS-PUBLIC / IAM-WILDCARD, MEDIUM for S3-NO-ENCRYPTION. All three
+  interpretations are now accepted. **Only overall spec approval remains
+  before slice 1.**
 
 ---
 
@@ -213,3 +217,17 @@
   prompts.md updated. No implementation code touched.
 - **How verified:** documentation-only diff; remotes still absent.
   Outstanding: interpretation 3 and overall spec approval.
+
+### Turn 9 — 2026-08-07 15:55 (+0200)
+
+**Prompt (verbatim):**
+
+> Interpretation 3 (severity): approved as proposed
+
+- **Intent:** approve the proposed severity grades unchanged.
+- **What changed:** SPEC.md — interpretation 3 marked ACCEPTED as proposed
+  (3× CRITICAL, 3× HIGH, 1× MEDIUM); interpretations header now records all
+  three as accepted (Turns 5/8/9). prompts.md updated. No implementation
+  code touched.
+- **How verified:** documentation-only diff; remotes still absent. The only
+  gate left before slice 1 is overall spec approval.
