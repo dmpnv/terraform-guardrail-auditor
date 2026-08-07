@@ -1,6 +1,6 @@
 fastapi>=0.115
 uvicorn[standard]>=0.30
 SQLAlchemy>=2.0
-python-hcl2>=4.3
+python-hcl2==8.1.2
 pytest>=8.0
 httpx>=0.27

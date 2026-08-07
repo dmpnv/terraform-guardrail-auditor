@@ -41,6 +41,9 @@
 - Draft leftovers still live outside git: `.venv/`, `data/guardrail.db`
   (both gitignored), and a draft uvicorn server still serving on
   127.0.0.1:8011 from Turn 1.
+- `python-hcl2` pinned to **8.1.2** (Turn 6) — the parser is written against
+  the 8.x output format, so the pin is a correctness matter, not just
+  hygiene. Full pinning of the remaining dependencies stays slice-4 scope.
 
 ---
 
@@ -149,3 +152,21 @@
   prompts.md updated. No implementation code touched.
 - **How verified:** documentation-only diff; remotes still absent.
   Interpretations 1 and 3 and the overall spec approval remain outstanding.
+
+### Turn 6 — 2026-08-07 15:43 (+0200)
+
+**Prompt (verbatim):**
+
+> Confirm .gitignore covers .venv/ and data/*.db, and that requirements.txt pins the exact python-hcl2 version you tested (8.1.2)
+
+- **Intent:** audit two hygiene claims — ignore rules and the parser
+  dependency pin.
+- **What changed:** `.gitignore` needed no change (confirmed, not assumed:
+  `git check-ignore -v` shows `.venv` matched by the `.venv/` rule and
+  `data/*.db` matched by the `data/` rule, with `*.db` as a second net).
+  `requirements.txt` was **not** compliant — it said `python-hcl2>=4.3` while
+  the parser targets the 8.x output format; changed to `python-hcl2==8.1.2`.
+  prompts.md updated.
+- **How verified:** `pip install -r requirements.txt` resolves cleanly with
+  the pin against the working venv; pytest still 11/11 (0.32s); remotes
+  still absent.
