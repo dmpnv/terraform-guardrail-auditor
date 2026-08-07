@@ -35,13 +35,22 @@ from a configurable path (`GUARDRAIL_RULES_FILE`, default `rules.yaml`) at
 startup. The README states this policy explicitly, and a dedicated test proves
 it (see Tests).
 
-**Interpretations needing your sign-off** (parameterizations, not new operators):
+**Interpretations** (parameterizations, not new operators — 1 and 3 still
+need your sign-off):
 1. `resource_type` and clause values may be **lists** (list = any-of) — needed
    for "ACL **or** policy" and the two public ACL values.
-2. `absent` takes an optional `companion_type`: the check passes when a
-   resource of that type references this resource (S3 encryption lives in a
-   split `aws_s3_bucket_server_side_encryption_configuration` resource on
-   AWS provider v4+). Used by rule 4 only.
+2. **ACCEPTED (Turn 5), with two conditions now part of this spec:** `absent`
+   takes an optional `companion_type`. Semantics (data contract, documented in
+   the README next to the rules-are-data policy): the check **passes** when
+   the scan contains a resource of `companion_type` **linked** to the checked
+   resource — linked meaning any top-level argument of the companion either
+   references the checked resource's address (e.g. contains
+   `aws_s3_bucket.reports`) or literally equals the checked resource's
+   name-defining argument (for S3, `bucket`). Models arguments the AWS
+   provider v4+ split into companion resources; used by rule 4 only.
+   Condition two: a **negative fixture** — a bucket plus its
+   `aws_s3_bucket_server_side_encryption_configuration` in the same file must
+   produce **zero findings for rule 4** (see Tests).
 3. Severity assignments above (3× CRITICAL, 3× HIGH, 1× MEDIUM) are my
    proposal — say the word to re-grade.
 
@@ -86,6 +95,11 @@ append a brand-new rule in YAML only (e.g. LOW / `aws_s3_bucket` /
 a fixture, and assert the new rule id surfaces as a finding with full
 provenance — zero code changes anywhere.
 
+A **companion negative fixture**: a bucket plus its linked
+`aws_s3_bucket_server_side_encryption_configuration` in the same file —
+asserts **zero findings for rule 4** (S3-NO-ENCRYPTION), guarding the
+`companion_type` mechanism against false positives.
+
 And a **score-formula test**: the README's worked example as a fixture
 (public + unencrypted S3 bucket, security group with SSH 22 open to
 0.0.0.0/0, encrypted EBS volume; no RDS, no IAM anywhere) — asserts the scan
@@ -103,8 +117,9 @@ no remotes, no push.
 ## Delivery — compliance slices over the existing draft (1 slice = 1 turn, verified + committed)
 1. YAML rule engine skeleton + provenance (line + evidence) in the parser +
    **one rule (SSH-WORLD) end to end** + its golden fixture test.
-2. Remaining six rules in `rules.yaml` + fixtures + the rule-extensibility
-   test; **delete** the Python 11-rule pack.
+2. Remaining six rules in `rules.yaml` + fixtures (incl. the companion
+   negative fixture for rule 4) + the rule-extensibility test; **delete** the
+   Python 11-rule pack.
 3. Per-file + total score + the score-formula test (hand-computed 40.5
    fixture), server-rendered dashboard with inline-SVG trend (**delete** the
    Chart.js/Google-Fonts CDN page), multipart `POST /scans`.

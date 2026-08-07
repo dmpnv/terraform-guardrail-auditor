@@ -30,6 +30,13 @@
   to the denominator; a failed pair counts its weight once. Worked example
   (score 40.5 = 100 × (1 − 22/37)) in README; score-formula pytest lands in
   slice 3.
+- **Interpretation 2 ACCEPTED (Turn 5)** with two conditions, both folded into
+  SPEC.md and README: companion_type semantics documented in the README as
+  part of the data contract (linked = companion argument references the
+  address, or equals the name-defining argument), and a negative fixture —
+  bucket + its aws_s3_bucket_server_side_encryption_configuration in one file
+  ⇒ zero findings for rule 4 (slice 2). **Interpretations 1 and 3 and the
+  overall spec still await approval.**
 - MVP milestone: **not yet reached**.
 - Draft leftovers still live outside git: `.venv/`, `data/guardrail.db`
   (both gitignored), and a draft uvicorn server still serving on
@@ -124,3 +131,21 @@
 - **How verified:** arithmetic re-checked by hand (22/37 = 0.59459…;
   1 − 0.59459… = 0.40540…; ×100 → 40.5); documentation-only diff; remotes
   still absent. Spec remains **awaiting approval**.
+
+### Turn 5 — 2026-08-07 15:42 (+0200)
+
+**Prompt (verbatim):**
+
+> Accepting interpretation 2 with two conditions: document the companion_type semantics in the README next to the rules-are-data policy (it is part of the data contract), and add a negative fixture: a bucket plus its aws_s3_bucket_server_side_encryption_configuration in the same file must produce zero findings for rule 4.
+
+- **Intent:** accept the companion_type parameterization of `absent`,
+  conditional on README-documented semantics (data contract) and a negative
+  regression fixture for rule 4.
+- **What changed:** SPEC.md — interpretation 2 marked ACCEPTED with both
+  conditions folded in and the linked-resource semantics spelled out; the
+  companion negative fixture added to Tests and slice 2. README — a
+  companion_type data-contract paragraph added directly under the
+  rules-are-data policy, including the negative-fixture guarantee.
+  prompts.md updated. No implementation code touched.
+- **How verified:** documentation-only diff; remotes still absent.
+  Interpretations 1 and 3 and the overall spec approval remain outstanding.

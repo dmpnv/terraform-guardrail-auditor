@@ -81,6 +81,18 @@ a newly added YAML rule is picked up by the engine and produces a finding.
 `app/engine/rules.py`; the migration to `rules.yaml` is governed by `SPEC.md`
 and lands in slice 2.)*
 
+**Data contract — `companion_type` on `absent`:** `absent <attr>` normally
+flags a resource when `<attr>` is missing. With `companion_type: <type>` the
+check instead **passes** if the scan contains a resource of `<type>` that is
+*linked* to the checked resource — linked meaning any top-level argument of
+the companion either references the checked resource's address (e.g. contains
+`aws_s3_bucket.reports`) or literally equals the checked resource's
+name-defining argument (for S3, `bucket`). This models arguments the AWS
+provider v4+ split into companion resources; S3-NO-ENCRYPTION uses it. A
+negative fixture guarantees that a bucket with its
+`aws_s3_bucket_server_side_encryption_configuration` in the same file yields
+zero findings for that rule.
+
 ## Risk score
 
 Weights: CRITICAL = 10, HIGH = 5, MEDIUM = 2, LOW = 1.
