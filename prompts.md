@@ -49,6 +49,9 @@
   draft server, the multipart target form labeled as landing in slice 3.
   README references `tests/fixtures/ssh_world.tf` — slice 1 must use exactly
   that fixture filename.
+- **Interpretation 1 ACCEPTED (Turn 8)** — list values for `resource_type`
+  and clause values, any-of semantics. **Still outstanding: interpretation 3
+  (severity grades) and overall spec approval.**
 
 ---
 
@@ -196,3 +199,17 @@
   live draft server — health 200 (11 rules), rules list returned, draft-form
   POST created scan #4, GET /scans/1 returned, severity=CRITICAL filter
   returned 4 findings. The multipart form is honestly marked not-yet-live.
+
+### Turn 8 — 2026-08-07 15:53 (+0200)
+
+**Prompt (verbatim):**
+
+> Interpretation 1: approve
+
+- **Intent:** approve interpretation 1 (list values for `resource_type` and
+  clause values; any-of semantics).
+- **What changed:** SPEC.md — interpretation 1 marked ACCEPTED; the
+  interpretations header now shows only #3 (severity grades) as pending.
+  prompts.md updated. No implementation code touched.
+- **How verified:** documentation-only diff; remotes still absent.
+  Outstanding: interpretation 3 and overall spec approval.

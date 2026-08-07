@@ -35,10 +35,11 @@ from a configurable path (`GUARDRAIL_RULES_FILE`, default `rules.yaml`) at
 startup. The README states this policy explicitly, and a dedicated test proves
 it (see Tests).
 
-**Interpretations** (parameterizations, not new operators — 1 and 3 still
-need your sign-off):
-1. `resource_type` and clause values may be **lists** (list = any-of) — needed
-   for "ACL **or** policy" and the two public ACL values.
+**Interpretations** (parameterizations, not new operators — 3 still needs
+your sign-off):
+1. **ACCEPTED (Turn 8):** `resource_type` and clause values may be **lists**
+   (list = any-of) — needed for "ACL **or** policy" and the two public ACL
+   values.
 2. **ACCEPTED (Turn 5), with two conditions now part of this spec:** `absent`
    takes an optional `companion_type`. Semantics (data contract, documented in
    the README next to the rules-are-data policy): the check **passes** when
