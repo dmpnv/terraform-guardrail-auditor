@@ -14,6 +14,10 @@
   deck/deck.md (PDF rendered locally, gitignored), and this log.
 - The dev server on 127.0.0.1:8011 was stopped at close; restart per the
   README quickstart.
+- **Follow-up session (Turn 24, same T0):** real headless-Chrome screenshots
+  of the live app added to the deck (deck/assets/, three PNGs; slide count
+  now 11; numbers slide refreshed to stay verifiable). Server stopped again
+  at the end. See the Turn 24 entry.
 
 ## Decisions (kept current)
 
@@ -808,3 +812,43 @@
 - **How verified:** closing pytest run **35/35**; `git status` clean before
   the closure commit; `git remote -v` empty (nothing ever pushed); total
   elapsed computed from the system clock against the fixed T0.
+
+### Turn 24 — 2026-08-07 19:11 (+0200) — follow-up session
+
+**Prompt (verbatim):**
+
+> Follow-up session, one turn, one commit: add real screenshots of the running dashboard to the deck.No manual files from me - you capture everything yourself.----1. Start the dev server on the existing database (it has a real scan history for the trend).2. Capture screenshots with headless Chrome (no new dependencies, no playwright):"chrome --headless --screenshot=<path> --window-size=1600,900 <url>" - find the chrome binaryon PATH or at the standard install location. Capture at least:- the populated dashboard (latest scan with findings, posture panel with the real trend);- the annotated source view area (a scan whose findings highlight lines - navigate to a fragmentanchor URL so a highlighted line is in view);- if a dark variant is feasible via a Chrome flag (e.g. --force-prefers-color-scheme=dark orsimilar), capture one dark shot too; if not feasible cleanly, light-only is fine - say so.3. Put the PNGs in deck/assets/ (reasonable size - re-capture at a smaller window or compresslosslessly if any file lands over ~400 KB). They are LOCAL repo assets: this does not violatethe offline rule - the deck still renders with zero external requests.4. Update deck/deck.md: embed the screenshots where they carry weight - the "What was built"slide and/or a dedicated "The dashboard" slide after "How it works"; keep 10-11 slides total.The theme's img style (white padding card, shadow) already fits screenshots - use it as is.
+> 5. Re-render the PDF with npx @marp-team/marp-cli to verify layout (images must not overflowslides); the PDF stays gitignored, do not commit it.6. Stop the dev server when done. Update prompts.md as always (note that screenshots werecaptured by headless Chrome from the live app), commit, report elapsed.
+
+- **Intent:** add self-captured, real screenshots of the running dashboard
+  to the deck — headless Chrome only, local assets, one commit.
+- **What changed:** server started on the existing database (the history had
+  grown to 19 scans through the user's own use — real trend); a
+  findings-bearing scan was seeded as latest (score_formula.tf, #20, 40.5)
+  since the previous latest was clean. Chrome found at the x86 install path
+  (registry-confirmed). Three captures into deck/assets/:
+  dashboard-light.png (78 KB, populated overview), dashboard-dark.png
+  (79 KB — dark achieved with NO flags: screenshotting /theme/dark lets the
+  app's own PRG redirect set the cookie inside the headless session; the
+  suggested --force-prefers-color-scheme flag wasn't needed) and
+  annotated-source.png (147 KB, 1200x1900 full-page capture). Honest
+  method note: fragment-anchor URLs scroll but do NOT paint in this
+  build's headless screenshots (old headless: no scroll; new headless:
+  scrolled but blank/partial paint even with virtual-time and
+  compositor-stage flags — three attempts logged) — so the annotated view
+  is a fully-painted tall capture, and the deck shows the region through a
+  CSS overflow window at native scale; the committed PNG is the untouched
+  capture. deck/deck.md: dark shot on the title slide, new "The dashboard,
+  live" slide after How-it-works (light overview + the annotated crop
+  window), 11 slides total; numbers slide refreshed to stay verifiable
+  (commits row 27 via HEAD~1, prompts row 24 turns). Disclosed CSS-class
+  additions in the style block (marp strips inline style attributes — the
+  layout classes carry the two-up and the crop; a max-width:none unlock was
+  needed because marp's default theme caps img at 100%). PDF re-rendered
+  (416 KB, stays gitignored).
+- **How verified:** every capture Read and inspected (populated posture
+  2/0/1/0, real 20-point trend, dark ✓ chip, annotated highlights + Fix
+  lines); rendered slides 1, 2 and 5 inspected as PNGs — the blank-crop
+  defect was caught visually, diagnosed via the built HTML plus a
+  zero-offset probe, fixed, and re-verified; all assets ≤147 KB; 11-slide
+  PDF builds cleanly; server stopped at the end.

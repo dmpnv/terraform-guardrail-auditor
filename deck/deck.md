@@ -35,6 +35,17 @@ style: |
      line completes the theme's own transparent-table intent — no rule above
      was altered */
   section table thead tr { background: transparent !important; }
+  /* added (disclosed): layout classes for the screenshot slide — marp strips
+     inline style attributes, so the two-up arrangement and the crop window
+     onto the full-page capture live here; no supplied rule was altered */
+  section .shots { display: flex; gap: 14px; align-items: flex-start; }
+  section .shots > img { width: 49%; flex: none; margin: 10px 0; }
+  section .cropwin { width: 49%; flex: none; height: 316px; overflow: hidden;
+    border-radius: 10px; background: #f4f7fa; padding: 8px; margin: 10px 0;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.45); }
+  section .cropwin img { width: 224%; max-width: none; max-height: none;
+    display: block; margin: -870px 0 0 -50px; padding: 0;
+    background: transparent; border-radius: 0; box-shadow: none; }
   section .takeaway { color: #ffb703; font-size: 22px; margin-top: 16px; font-weight: 600; }
   section .loop {
     position: absolute; top: 58px; right: 54px;
@@ -54,6 +65,8 @@ with file / line / evidence, a severity-weighted risk score — and one
 server-rendered dashboard with zero client JavaScript.
 
 *Built 2026-08-07, in one session. Every line written by an AI; every step gated by a human.*
+
+![h:280](assets/dashboard-dark.png)
 
 ---
 
@@ -89,6 +102,19 @@ server-rendered dashboard with zero client JavaScript.
 - Annotated source: every finding lands on its own line — `file:line`, evidence, fix beneath.
 - Posture at a glance: severity tiles plus a score trend across persisted scans (SQLite).
 - Deep-linkable: filter = query param, code line = fragment anchor; theme rides a cookie (System / Dark / Light).
+
+---
+
+## The dashboard, live
+
+# Real captures from the **running app**
+
+<div class="shots">
+  <img src="assets/dashboard-light.png" alt="Populated dashboard, light theme: risk score 40.5, posture tiles, real 20-scan trend, per-file scores" />
+  <div class="cropwin"><img src="assets/annotated-source.png" alt="Annotated source view at native scale: highlighted finding lines with rule, message and fix beneath" /></div>
+</div>
+
+*Left: the populated dashboard — 20 real scans on the trend. Right: the annotated source view at native scale — highlighted line, rule, message, fix. Captured by headless Chrome from the live app; local repo assets, so the deck still renders offline.*
 
 ---
 
@@ -137,8 +163,8 @@ server-rendered dashboard with zero client JavaScript.
 | Guardrails / operators | 7 / 5 | `rules.yaml` |
 | API endpoints | 5 | `/openapi.json`, README curl section |
 | Golden fixtures | 11 | `tests/fixtures/*.tf` |
-| Commits before this deck | 25 | `git rev-list --count HEAD~1` |
-| Prompts logged verbatim | 21 turns | `prompts.md` |
+| Commits before this revision | 27 | `git rev-list --count HEAD~1` |
+| Prompts logged verbatim | 24 turns | `prompts.md` |
 | Themes | 2 + System | `/theme/{system,dark,light}` |
 | Manual code edits by the human | 0 | `CLAUDE.md` rule, `prompts.md` log |
 | Remotes / pushes | 0 | `git remote -v` |
