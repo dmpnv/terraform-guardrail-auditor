@@ -205,6 +205,19 @@ plus the no-stored-source fallback).
 | `GUARDRAIL_MAX_FILES` | `500` | Max `.tf` files per scan |
 | `GUARDRAIL_MAX_FILE_BYTES` | `1000000` | Per-file size cap |
 
+## Known limitations
+
+- **IPv6:** the open-to-world checks match `0.0.0.0/0` only — `::/0`
+  open-to-world variants are not detected.
+- **Single-scan, single-file semantics:** module resolution and cross-file
+  references are out of scope; the only cross-resource link the engine
+  follows is the S3 encryption companion
+  (`aws_s3_bucket_server_side_encryption_configuration`).
+- **Textual policy matching:** IAM and bucket-policy checks use
+  whitespace-normalized substring matching on the policy text (heredoc /
+  JSON strings). Policies built with `jsonencode()` arrive as unevaluated
+  HCL expressions and are **not** matched.
+
 ## License
 
 MIT — see `LICENSE`.

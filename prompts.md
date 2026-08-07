@@ -54,6 +54,12 @@
   TrendPoint / ScanSummaryOut folded into ScanOut), and `samples/`
   (fixtures are the canonical corpus; parser tests rewritten against them).
   A guard test pins the deletions (404/405).
+- **Known-limitations section added to README (Turn 16, slice-4 scope):**
+  `::/0` open-to-world variants not detected; module resolution and
+  cross-file references out of scope beyond the S3 encryption companion;
+  policy matching is textual (whitespace-normalized substring) —
+  `jsonencode()` policies are not matched. All three verified against the
+  implementation before writing them down.
 - Draft leftovers still live outside git: `.venv/`, `data/guardrail.db`
   (both gitignored), and a draft uvicorn server still serving on
   127.0.0.1:8011 from Turn 1.
@@ -492,3 +498,24 @@
   (/summary 404, GET /scans 405, DELETE 405), dashboard and /docs 200.
   **MVP milestone reached** and recorded in Decisions. Remotes: none, as
   always.
+
+### Turn 16 — 2026-08-07 17:31 (+0200)
+
+**Prompt (verbatim):**
+
+> Add a "Known limitations" section to the README, then commit (slice-4 scope): IPv6 ::/0 open-to-world variants are not detected; module resolution and cross-file references (beyond the S3 encryption companion) are out of scope; policy matching is textual (whitespace-normalized substring) - policies built with jsonencode() are not matched.
+
+- **Intent:** document three known limitations in the README, as slice-4
+  scope, and commit.
+- **What changed:** README gains a "Known limitations" section (placed
+  before License) with the three items. Each claim was checked against the
+  code before writing: `open_port` compares against the rule's literal
+  `0.0.0.0/0` so `::/0` never matches; the S3 companion contract is the
+  only cross-resource/cross-file link and modules are never resolved;
+  `contains` does whitespace-normalized substring matching on the policy
+  string, and `jsonencode()` policies surface as unevaluated `${...}` HCL
+  expressions (`Action = "*"`), which the JSON-form needle does not match.
+  prompts.md updated. Documentation-only diff.
+- **How verified:** claims cross-checked against yaml_engine.py behavior;
+  pytest re-run **33/33** (unchanged, as expected for a doc-only change);
+  remotes still absent.
