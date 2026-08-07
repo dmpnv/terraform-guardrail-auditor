@@ -27,6 +27,10 @@ def _evidence(project: ParsedProject, res: TFResource, hint: str) -> tuple:
         for i in range(res.start_line - 1, end):
             if hint in lines[i]:
                 return i + 1, lines[i].strip()[:200]
+        norm_hint = " ".join(hint.split())
+        for i in range(res.start_line - 1, end):
+            if norm_hint in " ".join(lines[i].split()):
+                return i + 1, lines[i].strip()[:200]
     return res.start_line, lines[res.start_line - 1].strip()[:200]
 
 

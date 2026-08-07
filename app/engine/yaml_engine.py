@@ -187,12 +187,76 @@ def _eval_open_port(clause: Clause, res: TFResource) -> tuple:
     return False, None
 
 
+def _norm_ws(s: str) -> str:
+    return " ".join(s.split())
+
+
+def _as_values(v: Any) -> list:
+    return v if isinstance(v, list) else [v]
+
+
+def _companion_linked(companion: TFResource, res: TFResource) -> bool:
+    """Accepted data contract (SPEC.md, interpretation 2): linked = any
+    top-level argument of the companion references the checked resource's
+    address, or literally equals its name-defining argument (for S3,
+    `bucket`)."""
+    addr = f"{res.type}.{res.name}"
+    declared = res.attrs.get("bucket")
+    for v in companion.attrs.values():
+        if not isinstance(v, str):
+            continue
+        if addr in v:
+            return True
+        if isinstance(declared, str) and declared and v == declared:
+            return True
+    return False
+
+
+def _eval_exists(clause: Clause, res: TFResource) -> tuple:
+    return (clause.attr in res.attrs), None
+
+
+def _eval_absent(clause: Clause, res: TFResource, project: ParsedProject) -> tuple:
+    if clause.attr in res.attrs:
+        return False, None
+    if clause.companion_type:
+        for companion in project.managed(clause.companion_type):
+            if _companion_linked(companion, res):
+                return False, None
+    return True, None
+
+
+def _eval_eq(clause: Clause, res: TFResource) -> tuple:
+    if clause.attr not in res.attrs:
+        return False, None
+    actual = res.attrs[clause.attr]
+    for v in _as_values(clause.value):
+        if actual == v:
+            return True, None
+    return False, None
+
+
+def _eval_contains(clause: Clause, res: TFResource) -> tuple:
+    actual = res.attrs.get(clause.attr)
+    if not isinstance(actual, str):
+        return False, None
+    hay = _norm_ws(actual)
+    for v in _as_values(clause.value):
+        if isinstance(v, str) and _norm_ws(v) in hay:
+            return True, v
+    return False, None
+
+
 def evaluate_clause(clause: Clause, res: TFResource, project: ParsedProject) -> tuple:
-    """-> (matched, evidence_hint). Slice 1 implements open_port; the four
-    scalar operators are valid vocabulary but their implementations land in
-    slice 2 with the rules that use them."""
+    """-> (matched, evidence_hint)."""
     if clause.op == "open_port":
         return _eval_open_port(clause, res)
-    raise RulePackError(
-        f"operator {clause.op!r} is not implemented yet (arrives in slice 2); "
-        "no rule in the current pack may use it")
+    if clause.op == "exists":
+        return _eval_exists(clause, res)
+    if clause.op == "absent":
+        return _eval_absent(clause, res, project)
+    if clause.op == "eq":
+        return _eval_eq(clause, res)
+    if clause.op == "contains":
+        return _eval_contains(clause, res)
+    raise RulePackError(f"unknown operator {clause.op!r}")  # unreachable after load validation

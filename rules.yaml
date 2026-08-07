@@ -1,9 +1,21 @@
 # Guardrail pack — rules are data (SPEC.md, README "Rules are user-editable data").
 # Adding or changing a rule means editing this file only; zero code changes.
 # Closed operator vocabulary: exists, absent, eq, contains, open_port.
-# Override the pack location with GUARDRAIL_RULES_FILE.
-#
-# Slice 1 ships SSH-WORLD; the remaining six spec rules land in slice 2.
+# Clause lists are any-of; list values are any-of. Override the pack location
+# with GUARDRAIL_RULES_FILE.
+
+- id: S3-PUBLIC
+  severity: CRITICAL
+  resource_type: [aws_s3_bucket, aws_s3_bucket_acl, aws_s3_bucket_policy]
+  check:
+    - op: eq
+      attr: acl
+      value: [public-read, public-read-write]
+    - op: contains
+      attr: policy
+      value: '"Principal": "*"'
+  message: "S3 bucket is publicly readable via ACL or bucket policy."
+  remediation: "Set the ACL to private (or remove the public principal from the bucket policy) and serve public content through CloudFront with origin access control."
 
 - id: SSH-WORLD
   severity: CRITICAL
@@ -14,3 +26,55 @@
       cidr: "0.0.0.0/0"
   message: "SSH (22) is open to the entire internet (0.0.0.0/0)."
   remediation: "Restrict the source CIDR to trusted ranges, or remove direct SSH access and use SSM Session Manager or a bastion behind SSO."
+
+- id: RDP-WORLD
+  severity: CRITICAL
+  resource_type: [aws_security_group, aws_security_group_rule]
+  check:
+    - op: open_port
+      port: 3389
+      cidr: "0.0.0.0/0"
+  message: "RDP (3389) is open to the entire internet (0.0.0.0/0)."
+  remediation: "Restrict the source CIDR to trusted ranges, or use a bastion or Fleet Manager instead of direct RDP exposure."
+
+- id: S3-NO-ENCRYPTION
+  severity: MEDIUM
+  resource_type: aws_s3_bucket
+  check:
+    - op: absent
+      attr: server_side_encryption_configuration
+      companion_type: aws_s3_bucket_server_side_encryption_configuration
+  message: "S3 bucket has no server-side encryption configuration."
+  remediation: "Attach an aws_s3_bucket_server_side_encryption_configuration (aws:kms with a customer-managed key preferred)."
+
+- id: EBS-NO-ENCRYPTION
+  severity: HIGH
+  resource_type: aws_ebs_volume
+  check:
+    - op: absent
+      attr: encrypted
+    - op: eq
+      attr: encrypted
+      value: false
+  message: "EBS volume is not encrypted at rest."
+  remediation: "Set encrypted = true on the volume (or enable EBS encryption-by-default for the account)."
+
+- id: RDS-PUBLIC
+  severity: HIGH
+  resource_type: aws_db_instance
+  check:
+    - op: eq
+      attr: publicly_accessible
+      value: true
+  message: "RDS instance is publicly accessible."
+  remediation: "Set publicly_accessible = false and reach the database via private networking (VPN, peering or SSM port forwarding)."
+
+- id: IAM-WILDCARD
+  severity: HIGH
+  resource_type: [aws_iam_policy, aws_iam_role_policy, aws_iam_user_policy, aws_iam_group_policy]
+  check:
+    - op: contains
+      attr: policy
+      value: '"Action": "*"'
+  message: "IAM policy grants Action \"*\"."
+  remediation: "Replace the wildcard with least-privilege actions scoped to specific resource ARNs."

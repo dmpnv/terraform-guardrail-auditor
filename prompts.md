@@ -70,6 +70,16 @@
   fields, draft tests tied to the 11-rule code pack rewritten (pack itself
   is deleted in slice 2), three one-line dashboard patches for the removed
   field. pytest 17/17.
+- **Slice 2 DELIVERED (Turn 11):** all seven spec rules live in rules.yaml
+  (spec order); the four scalar operators implemented (exists / absent with
+  the accepted companion contract / eq with any-of values / contains with
+  whitespace-normalized matching); evidence scan gained a
+  normalized-whitespace fallback. Golden fixtures with exact
+  (rule, resource, line) assertions for every rule; the required companion
+  negative fixture (zero findings); the rule-extensibility proof
+  (YAML-appended TEST-TAGS-REQUIRED rule fires with zero code changes).
+  **Deleted: app/engine/rules.py** (the draft's Python 11-rule pack) — rules
+  are data now, per spec. pytest 27/27.
 
 ---
 
@@ -271,3 +281,32 @@
   golden fixture asserting file/line 11/evidence snippet/score 50.0,
   API end-to-end returning the finding with provenance); live health check
   after restart shows rules_loaded = 1.
+
+### Turn 11 — 2026-08-07 16:20 (+0200)
+
+**Prompt (verbatim):**
+
+> Slice 2: go
+
+- **Intent:** deliver slice 2 — remaining six rules as YAML data, the full
+  operator vocabulary, golden fixtures, the companion negative fixture, the
+  extensibility proof, and deletion of the Python rule pack.
+- **What changed:** rules.yaml now carries all seven spec rules in spec
+  order. yaml_engine implements exists / absent (with the accepted
+  companion-linking contract) / eq (any-of values) / contains
+  (whitespace-normalized); scanner's evidence scan gained a normalized
+  fallback for multi-space source lines. New fixtures: rdp_world.tf,
+  s3_public.tf (ACL + bucket-policy flavors), s3_no_encryption.tf,
+  s3_encrypted_companion.tf (negative), ebs_no_encryption.tf (absent +
+  explicit false), rds_public.tf, iam_wildcard.tf, clean.tf. New
+  tests/test_rules_pack.py asserts exact (rule_id, resource_address, line)
+  triples per fixture, evidence content, the negative fixture at zero
+  findings, and the extensibility proof (rule appended to a copied pack via
+  GUARDRAIL_RULES_FILE fires with zero code changes). Slice-1 tests updated
+  for the 7-rule pack (ssh_world.tf now evaluates 4 pairs -> score 75.0;
+  rules_loaded = 7). **Deleted: app/engine/rules.py** — noted per protocol.
+  Dev server restarted on the new engine.
+- **How verified:** pytest **27/27** (one expected update along the way: the
+  slice-1 fixture's checks_total went 2 -> 4 with the full pack — corrected
+  and re-run); live health after restart shows rules_loaded = 7; remotes
+  still absent.

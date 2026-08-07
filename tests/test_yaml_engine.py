@@ -11,9 +11,8 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def test_pack_loads_ssh_world():
-    rules = load_rules()
-    assert [r.id for r in rules] == ["SSH-WORLD"]
-    r = rules[0]
+    rules = {r.id: r for r in load_rules()}
+    r = rules["SSH-WORLD"]
     assert r.severity == "CRITICAL"
     assert r.resource_type == ("aws_security_group", "aws_security_group_rule")
     assert r.check[0].op == "open_port"
@@ -80,10 +79,10 @@ def test_ssh_world_golden_fixture():
     assert f["evidence"].startswith("cidr_blocks")
     assert "0.0.0.0/0" in f["evidence"]
 
-    # two SGs evaluated by one CRITICAL rule; one failed -> 100*(1-10/20)
-    assert stats["checks_total"] == 2
+    # two SGs x (SSH-WORLD + RDP-WORLD) = 4 pairs; one failed -> 100*(1-10/40)
+    assert stats["checks_total"] == 4
     assert stats["checks_failed"] == 1
-    assert stats["score"] == 50.0
+    assert stats["score"] == 75.0
 
 
 def test_ssh_world_end_to_end_api(client):
@@ -101,6 +100,7 @@ def test_ssh_world_end_to_end_api(client):
     assert "0.0.0.0/0" in f["evidence"]
 
     rules = client.get("/api/v1/rules").json()
-    assert [x["id"] for x in rules] == ["SSH-WORLD"]
+    assert "SSH-WORLD" in [x["id"] for x in rules]
+    assert len(rules) == 7
     health = client.get("/api/v1/health").json()
-    assert health["rules_loaded"] == 1
+    assert health["rules_loaded"] == 7

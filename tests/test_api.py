@@ -15,7 +15,7 @@ def test_health(client):
     assert r.status_code == 200
     body = r.json()
     assert body["status"] == "ok"
-    assert body["rules_loaded"] == 1
+    assert body["rules_loaded"] == 7
 
 
 def test_rules_endpoint(client):
