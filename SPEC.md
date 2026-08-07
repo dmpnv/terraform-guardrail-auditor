@@ -68,10 +68,23 @@ block's span (header to next top-level header). No hand-built parser.
 ## API (FastAPI, `/api/v1` — prefix locked) + dashboard
 `POST /scans` (multipart upload, one or more `.tf` files) · `GET /scans/{id}`
 · `GET /scans/{id}/findings` · `GET /rules` · `GET /health`.
-`GET /` — **one server-rendered HTML page** (Jinja2 template): overall risk
-score, per-severity counts, findings table with severity filter (via query
-parameter — zero client JS), trend across scans as **inline SVG**. **No CDN,
-no JS framework, no webfonts — zero external requests.**
+`GET /` — **one server-rendered HTML page** (Jinja2 template), amended
+(Turn 13) to this exact scope: overall risk score **with a color grade**;
+per-severity counts as a consistent badge system used identically in tiles
+and the findings table; a per-file scores block; findings table with
+monospace file:line, evidence styled as code, readable message/remediation,
+and severity filter links styled as chips (query parameter); trend across
+scans as **inline SVG** with axis labels, score labels, last-point emphasis
+and native title tooltips; a designed empty state (one line on what the tool
+does, the upload form, and the exact curl alternative); responsive
+single-column fallback; consistent spacing and type scale; inline SVG favicon
+as a data URI.
+**Upload form (same amendment):** plain HTML, zero JS — file input (multiple
+`.tf`) + optional label + submit posting to a dashboard-side `POST /` that
+reuses run_scan under the API's file count/size limits and redirects back to
+`GET /` (Post/Redirect/Get — the user never lands on raw JSON).
+**Nothing beyond that list: no client JavaScript, no chart libraries, no CDN,
+no webfonts, no new pages — zero external requests.**
 
 ## Storage & scoring
 SQLite only (`data/guardrail.db`, SQLAlchemy), tables `scans` and `findings`;
@@ -103,6 +116,9 @@ A **companion negative fixture**: a bucket plus its linked
 asserts **zero findings for rule 4** (S3-NO-ENCRYPTION), guarding the
 `companion_type` mechanism against false positives.
 
+A **dashboard form e2e test** (amendment, Turn 13): multipart form POST to
+`/` → 303 redirect → `GET /` renders the newly created scan.
+
 And a **score-formula test**: the README's worked example as a fixture
 (public + unencrypted S3 bucket, security group with SSH 22 open to
 0.0.0.0/0, encrypted EBS volume; no RDS, no IAM anywhere) — asserts the scan
@@ -127,6 +143,9 @@ no remotes, no push.
 3. Per-file + total score + the score-formula test (hand-computed 40.5
    fixture), server-rendered dashboard with inline-SVG trend (**delete** the
    Chart.js/Google-Fonts CDN page), multipart `POST /scans`.
+3b. *(amendment, Turn 13)* Dashboard upload form (PRG) + visual quality pass
+   on the single page — delivered and committed on its own, before the rest
+   of slice 4.
 4. README, LICENSE, pinned requirements, polish; **delete** everything the
    spec doesn't call for — `GET /scans` list, `DELETE /scans/{id}`,
    `/api/v1/summary`, JSON-body scan inputs (path + inline), `samples/`

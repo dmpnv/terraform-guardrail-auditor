@@ -88,3 +88,26 @@ def test_dashboard_severity_filter(client):
     r = client.get("/", params={"severity": "CRITICAL"})
     assert r.status_code == 200
     assert "Critical" in r.text
+
+
+def test_dashboard_form_upload_redirects_and_renders(client):
+    """Amendment (Turn 13): plain-HTML form POST / -> 303 (PRG) -> GET /
+    renders the newly created scan — the user never lands on raw JSON."""
+    content = ('resource "aws_db_instance" "r" {\n'
+               '  publicly_accessible = true\n'
+               '  skip_final_snapshot = true\n'
+               '}\n')
+    r = client.post(
+        "/",
+        data={"label": "form-upload"},
+        files=[("files", ("form_rds.tf", content.encode("utf-8"), "text/plain"))],
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+    assert r.headers["location"] == "/"
+
+    page = client.get("/")
+    assert page.status_code == 200
+    assert "form-upload" in page.text          # the new scan is the latest
+    assert "RDS-PUBLIC" in page.text           # its finding renders
+    assert "form_rds.tf" in page.text          # per-file scores block

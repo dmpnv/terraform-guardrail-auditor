@@ -93,6 +93,16 @@
   schemas, path-scan resolution, the off-spec A–F grade field. New pins:
   python-multipart==0.0.32, Jinja2==3.1.6. README corrected (7-rule table,
   multipart examples, stale status notes removed). pytest 30/30.
+- **Dashboard amendment DELIVERED (Turn 13, own commit before rest of
+  slice 4):** plain-HTML upload form on the dashboard posting to `POST /`
+  (PRG, 303 back to `GET /`, API limits shared via read_tf_uploads; fixed
+  error codes rendered as one muted line); visual pass on the single page —
+  color-graded score with labeled band, one badge system for severities in
+  tiles and table, per-file scores block with meters, trend SVG with axis
+  labels + score labels + last-point emphasis, designed empty state,
+  responsive single column, data-URI SVG favicon. Zero JS / zero CDN /
+  system fonts / inline SVG only preserved. pytest 31/31; both page states
+  verified in Chrome.
 
 ---
 
@@ -356,3 +366,34 @@
   curl command uploads ssh_world.tf (finding at line 11 with evidence),
   dashboard then renders score 75.0 with the trend SVG; dashboard visually
   inspected in Chrome (charts get looked at, not assumed).
+
+### Turn 13 — 2026-08-07 16:51 (+0200)
+
+**Prompt (verbatim):**
+
+> Spec amendment to the dashboard section, then deliver this as its own turn (commit separately, before the rest of slice 4):1. Upload form - plain HTML, zero JS: file input (multiple .tf) + optional label + submit, posting to a dashboard-side POST / route that reuses run_scan and redirects back to GET / (Post/Redirect/Get) so the user never lands on raw JSON. Same file count/size limits as the API. One e2e test: form post -> redirect -> dashboard renders the new scan.2. Visual quality pass on the same single server-rendered page, preserving every existing guarantee (zero client JS, zero CDN, system fonts, inline SVG only):- clear hierarchy: large score with a color grade; severity tiles as a consistent badge system (CRITICAL/HIGH/MEDIUM/LOW) used identically in tiles and table;- findings table: monospace file:line, evidence styled as code, message and remediation readable, severity filter links styled as tabs/chips;- per-file scores block; trend SVG with axis labels, score labels and last-point emphasis, native title tooltips;- a designed empty state: one line on what the tool does, the upload form, and the exact curl alternative;- responsive single-column fallback; consistent spacing and type scale; inline SVG favicon as a data URI;- nothing beyond this list: no JavaScript, no chart libraries, no new pages.
+> Record the amendment in SPEC.md and prompts.md, verify by loading the page (empty state and a populated scan) in the browser, then proceed with the remainder of slice 4 (README, deletions, pins) as a separate turn.
+
+- **Intent:** amend the spec's dashboard section (upload form with PRG +
+  a precisely scoped visual quality pass), deliver it as its own commit
+  before the rest of slice 4, verify both page states in a real browser.
+- **What changed:** SPEC.md dashboard section rewritten to the amended
+  scope + dashboard form e2e test added to Tests + delivery item 3b.
+  `read_tf_uploads` factored out and shared so the dashboard form enforces
+  the API's exact limits; `POST /` added (PRG, 303; fixed error vocabulary
+  no_files/limits rendered as one muted line — logged interpretation: a
+  form needs feedback, message strings are fixed server-side, never echoed
+  input). Template rebuilt to the amendment list: color-graded score with
+  labeled band (color never alone), unified badge system, per-file scores
+  with meters, trend SVG with axis labels / per-point score labels (all
+  points ≤12 scans, else first/last/min/max) / last-point ring emphasis,
+  upload cards in both states, designed empty state with the exact curl
+  alternative, responsive fallback, data-URI SVG favicon. One e2e test:
+  form POST → 303 → GET / renders the new scan, its finding, and its
+  per-file row.
+- **How verified:** pytest **31/31**; fresh database, then in Chrome: empty
+  state screenshot (lead line + form + curl), seeded three scans via the
+  API, populated screenshot (score 35.7 Critical band, badges, labeled
+  trend 58.4→100→35.7 with emphasized last point, per-file meters 0 /
+  40.5, evidence chips). Zero client JS and zero external requests
+  preserved throughout.

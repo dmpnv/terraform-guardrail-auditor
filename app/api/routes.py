@@ -34,13 +34,9 @@ def list_rules():
     return [RuleOut.model_validate(r) for r in load_rules()]
 
 
-@router.post("/scans", response_model=ScanOut, status_code=201, tags=["scans"])
-async def create_scan(
-    files: list[UploadFile] = File(..., description="One or more .tf files"),
-    label: str = Form("", max_length=200),
-    db: Session = Depends(get_db),
-):
-    """Upload one or more Terraform files (multipart) and run a scan."""
+async def read_tf_uploads(files: list[UploadFile]) -> list[tuple]:
+    """Validate and read multipart uploads — shared by the API and the
+    dashboard form, so both enforce the same count/size limits."""
     if len(files) > config.MAX_FILES_PER_SCAN:
         raise HTTPException(status_code=400,
                             detail=f"Too many files (max {config.MAX_FILES_PER_SCAN}).")
@@ -52,6 +48,17 @@ async def create_scan(
                                 detail=f"{f.filename}: exceeds size limit "
                                        f"({config.MAX_FILE_BYTES} bytes).")
         named.append((f.filename or "upload.tf", raw.decode("utf-8", errors="replace")))
+    return named
+
+
+@router.post("/scans", response_model=ScanOut, status_code=201, tags=["scans"])
+async def create_scan(
+    files: list[UploadFile] = File(..., description="One or more .tf files"),
+    label: str = Form("", max_length=200),
+    db: Session = Depends(get_db),
+):
+    """Upload one or more Terraform files (multipart) and run a scan."""
+    named = await read_tf_uploads(files)
     return run_scan(db, files=named, label=label)
 
 

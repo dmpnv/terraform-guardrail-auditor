@@ -2,15 +2,18 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
 
-from fastapi import Depends, FastAPI, Query, Request
+from fastapi import (Depends, FastAPI, File, Form, HTTPException, Query,
+                     Request, UploadFile)
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from . import config
-from .api.routes import router
+from .api.routes import read_tf_uploads, router
 from .db import get_db, init_db
+from .engine.scanner import run_scan
 from .engine.yaml_engine import load_rules
 from .models import Finding, Scan
 
@@ -25,6 +28,22 @@ SEV_META = {
     "MEDIUM":   {"glyph": "●", "color": "#fab219", "label": "Medium"},
     "LOW":      {"glyph": "─", "color": "#8a97ab", "label": "Low"},
 }
+
+FORM_ERRORS = {
+    "no_files": "Choose at least one .tf file to scan.",
+    "limits": "Upload rejected: too many files or a file over the size limit.",
+}
+
+
+def score_band(score: float) -> dict:
+    """Color grade for a 0-100 risk score (always shown with its text label)."""
+    if score >= 90:
+        return {"color": "#0ca30c", "label": "Healthy"}
+    if score >= 70:
+        return {"color": "#fab219", "label": "Needs attention"}
+    if score >= 50:
+        return {"color": "#ec835a", "label": "At risk"}
+    return {"color": "#d03b3b", "label": "Critical"}
 
 
 @asynccontextmanager
@@ -57,25 +76,54 @@ app.include_router(router, prefix="/api/v1")
 
 
 def _trend_geometry(scans: list) -> Optional[dict]:
-    """Inline-SVG polyline geometry for the score trend (no JS, no libs)."""
+    """Inline-SVG geometry for the score trend (no JS, no libraries).
+
+    Axis labels, per-point score labels (all points up to 12 scans, else
+    first/last/min/max), and last-point emphasis are computed here so the
+    template stays declarative.
+    """
     if not scans:
         return None
-    w, h, pad = 640, 150, 14
-    points = []
+    w, h = 640, 178
+    pad_l, pad_r, pad_t, pad_b = 34, 18, 20, 26
+    inner_w, inner_h = w - pad_l - pad_r, h - pad_t - pad_b
     n = len(scans)
+
+    if n <= 12:
+        labeled = set(range(n))
+    else:
+        scores = [s.score for s in scans]
+        labeled = {0, n - 1, scores.index(min(scores)), scores.index(max(scores))}
+
+    points = []
     for i, s in enumerate(scans):
-        x = w / 2 if n == 1 else pad + i * (w - 2 * pad) / (n - 1)
-        y = pad + (100 - s.score) * (h - 2 * pad) / 100
-        points.append({"x": round(x, 1), "y": round(y, 1), "scan": s})
+        x = pad_l + inner_w / 2 if n == 1 else pad_l + i * inner_w / (n - 1)
+        y = pad_t + (100 - s.score) * inner_h / 100
+        points.append({
+            "x": round(x, 1),
+            "y": round(y, 1),
+            "scan": s,
+            "value": f"{s.score:g}",
+            "labeled": i in labeled,
+        })
     return {
         "w": w, "h": h,
-        "polyline": " ".join(f"{p['x']},{p['y']}" for p in points),
+        "polyline": " ".join(f"{p['x']}, {p['y']}" for p in points),
         "points": points,
+        "last": points[-1],
         "gridlines": [
-            {"y": pad, "label": "100"},
-            {"y": pad + (h - 2 * pad) / 2, "label": "50"},
-            {"y": h - pad, "label": "0"},
+            {"y": round(pad_t, 1), "label": "100"},
+            {"y": round(pad_t + inner_h / 2, 1), "label": "50"},
+            {"y": round(pad_t + inner_h, 1), "label": "0"},
         ],
+        "x_axis": {
+            "y": h - 8,
+            "first": {"x": points[0]["x"],
+                      "text": points[0]["scan"].created_at.strftime("%b %d, %H:%M")},
+            "last": {"x": points[-1]["x"],
+                     "text": points[-1]["scan"].created_at.strftime("%b %d, %H:%M")},
+        },
+        "grid_x2": w - pad_r,
     }
 
 
@@ -83,6 +131,7 @@ def _trend_geometry(scans: list) -> Optional[dict]:
 def dashboard(
     request: Request,
     severity: Optional[str] = Query(None),
+    error: Optional[str] = Query(None),
     db: Session = Depends(get_db),
 ):
     sev = severity.upper() if severity else None
@@ -95,12 +144,19 @@ def dashboard(
 
     counts = {s: 0 for s in SEVERITIES}
     findings: list = []
+    file_rows: list = []
+    band = None
     if latest:
         counts.update(latest.severity_counts)
         stmt = select(Finding).where(Finding.scan_id == latest.id)
         if sev:
             stmt = stmt.where(Finding.severity == sev)
         findings = db.scalars(stmt.order_by(Finding.severity_rank, Finding.id)).all()
+        band = score_band(latest.score)
+        file_rows = [
+            {"file": f, "score": s, "band": score_band(s)}
+            for f, s in sorted((latest.file_scores or {}).items())
+        ]
 
     recent = db.scalars(
         select(Scan).order_by(Scan.created_at.desc(), Scan.id.desc()).limit(30)
@@ -110,8 +166,10 @@ def dashboard(
 
     return TEMPLATES.TemplateResponse(request, "dashboard.html", {
         "latest": latest,
+        "band": band,
         "counts": counts,
         "findings": findings,
+        "file_rows": file_rows,
         "active_severity": sev,
         "trend": trend,
         "total_scans": total_scans,
@@ -119,4 +177,24 @@ def dashboard(
         "sev_meta": SEV_META,
         "rules_loaded": len(load_rules()),
         "version": config.API_VERSION,
+        "error_message": FORM_ERRORS.get(error) if error else None,
     })
+
+
+@app.post("/", include_in_schema=False)
+async def dashboard_upload(
+    files: list[UploadFile] = File(None),
+    label: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    """Dashboard upload form (Post/Redirect/Get): reuses run_scan under the
+    API's limits, then redirects so the user never lands on raw JSON."""
+    files = [f for f in (files or []) if f.filename]
+    if not files:
+        return RedirectResponse("/?error=no_files", status_code=303)
+    try:
+        named = await read_tf_uploads(files)
+    except HTTPException:
+        return RedirectResponse("/?error=limits", status_code=303)
+    run_scan(db, files=named, label=label[:200])
+    return RedirectResponse("/", status_code=303)
