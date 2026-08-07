@@ -40,22 +40,49 @@ to watch every guardrail fire; **“Scan secure sample”** shows a clean 100/A 
 
 ## API
 
+All endpoints live under the **`/api/v1`** prefix (locked).
+
+Spec endpoints (`SPEC.md`):
+
 | Method | Path | Purpose |
 |---|---|---|
 | `GET`  | `/api/v1/health` | Liveness + rule count |
-| `GET`  | `/api/v1/rules` | The guardrail pack (id, severity, remediation, references) |
-| `POST` | `/api/v1/scans` | Run a scan: `{"label", "path"}` **or** `{"label", "files": [{"path","content"}]}` |
-| `GET`  | `/api/v1/scans` | Scan history (`limit`, `offset`) |
-| `GET`  | `/api/v1/scans/{id}` | One scan with findings |
-| `GET`  | `/api/v1/scans/{id}/findings` | Findings, filterable by `severity` / `rule_id` |
-| `DELETE` | `/api/v1/scans/{id}` | Remove a scan and its findings |
-| `GET`  | `/api/v1/summary` | Dashboard aggregate: latest scan, top rules, score trend |
+| `GET`  | `/api/v1/rules` | The guardrail pack (id, severity, message, remediation) |
+| `POST` | `/api/v1/scans` | Upload one or more `.tf` files and run a scan |
+| `GET`  | `/api/v1/scans/{id}` | One scan with its scores |
+| `GET`  | `/api/v1/scans/{id}/findings` | Findings, filterable by `severity` |
+
+Draft-only endpoints still present until slices 3–4 remove them:
+`GET /api/v1/scans` (list), `DELETE /api/v1/scans/{id}`, `GET /api/v1/summary`.
+
+### curl examples — every endpoint
+
+One command per line. On Unix shells type `curl`; in Windows PowerShell type
+`curl.exe` (bare `curl` is an alias for `Invoke-WebRequest`).
 
 ```bash
-curl -s -X POST http://127.0.0.1:8011/api/v1/scans \
-  -H "Content-Type: application/json" \
-  -d '{"label": "insecure baseline", "path": "samples/insecure"}'
+# health — liveness and rule count
+curl -s http://127.0.0.1:8011/api/v1/health
+
+# rules — the loaded guardrail pack
+curl -s http://127.0.0.1:8011/api/v1/rules
+
+# create a scan — target form per SPEC.md (multipart upload; lands in slice 3;
+# repeat -F for more files)
+curl -s -X POST http://127.0.0.1:8011/api/v1/scans -F "files=@tests/fixtures/ssh_world.tf"
+
+# create a scan — draft form (works against the committed draft today)
+curl -s -X POST http://127.0.0.1:8011/api/v1/scans -H "Content-Type: application/json" -d '{"label": "insecure baseline", "path": "samples/insecure"}'
+
+# one scan by id
+curl -s http://127.0.0.1:8011/api/v1/scans/1
+
+# findings for a scan, filtered by severity
+curl -s "http://127.0.0.1:8011/api/v1/scans/1/findings?severity=CRITICAL"
 ```
+
+The dashboard is not an API endpoint — open <http://127.0.0.1:8011/> in a
+browser.
 
 ## Guardrail pack (v0.1 — 11 rules)
 

@@ -62,7 +62,7 @@ first; installed 8.1.2 does not support it → **bounded scan**: locate the
 `resource "type" "name"` header in the source, evidence found only within that
 block's span (header to next top-level header). No hand-built parser.
 
-## API (FastAPI, `/api/v1`) + dashboard
+## API (FastAPI, `/api/v1` — prefix locked) + dashboard
 `POST /scans` (multipart upload, one or more `.tf` files) · `GET /scans/{id}`
 · `GET /scans/{id}/findings` · `GET /rules` · `GET /health`.
 `GET /` — **one server-rendered HTML page** (Jinja2 template): overall risk
@@ -109,9 +109,10 @@ scores exactly **40.5**, hand-computed as `100 × (1 − 22/37)`.
 Pinned `requirements.txt` (adds PyYAML, python-multipart, Jinja2; removes
 nothing blindly — pins from the working venv), MIT `LICENSE`, `.gitignore`, no
 secrets or tokens anywhere. README: architecture, exact score formula, run
-commands for Windows **and** Unix, CloudFormation-out-of-scope note, the
-rules-are-data policy (edit `rules.yaml`, zero code changes), and a
-statement that **no cloud resources were used by design**. Local git only —
+commands for Windows **and** Unix, **exact curl examples for every endpoint**,
+CloudFormation-out-of-scope note, the rules-are-data policy (edit
+`rules.yaml`, zero code changes), and a statement that **no cloud resources
+were used by design**. Local git only —
 no remotes, no push.
 
 ## Delivery — compliance slices over the existing draft (1 slice = 1 turn, verified + committed)

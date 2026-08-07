@@ -44,6 +44,11 @@
 - `python-hcl2` pinned to **8.1.2** (Turn 6) — the parser is written against
   the 8.x output format, so the pin is a correctness matter, not just
   hygiene. Full pinning of the remaining dependencies stays slice-4 scope.
+- **`/api/v1` prefix locked (Turn 7).** README carries exact curl examples for
+  every endpoint; the four runnable ones verified verbatim against the live
+  draft server, the multipart target form labeled as landing in slice 3.
+  README references `tests/fixtures/ssh_world.tf` — slice 1 must use exactly
+  that fixture filename.
 
 ---
 
@@ -170,3 +175,24 @@
 - **How verified:** `pip install -r requirements.txt` resolves cleanly with
   the pin against the working venv; pytest still 11/11 (0.32s); remotes
   still absent.
+
+### Turn 7 — 2026-08-07 15:46 (+0200)
+
+**Prompt (verbatim):**
+
+> Keep /api/v1 prefix; README must show exact curl examples for every endpoint.
+
+- **Intent:** lock the API prefix and require copy-paste-exact curl coverage
+  of the whole API surface in the README.
+- **What changed:** SPEC.md — API section header now says "prefix locked";
+  README requirements list gains "exact curl examples for every endpoint".
+  README.md — API section rewritten: the five spec endpoints tabled, the
+  three draft-only endpoints explicitly marked for removal in slices 3–4,
+  and a curl block covering every endpoint (with a PowerShell `curl.exe`
+  note); the multipart POST is labeled as the slice-3 target form and the
+  JSON-body POST as the draft form that runs today. prompts.md updated.
+  No implementation code touched.
+- **How verified:** every runnable example executed verbatim against the
+  live draft server — health 200 (11 rules), rules list returned, draft-form
+  POST created scan #4, GET /scans/1 returned, severity=CRITICAL filter
+  returned 4 findings. The multipart form is honestly marked not-yet-live.
