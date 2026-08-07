@@ -29,6 +29,12 @@ a resource **fails if any clause matches**. Operator vocabulary is closed:
   `port` (or protocol `-1`/`all`) with `cidr` in its sources
 No eval, no expression language. An unknown operator in YAML is a startup error.
 
+**Rules are user-editable data: adding or changing a rule means editing
+`rules.yaml` and nothing else — zero code changes.** The engine loads the pack
+from a configurable path (`GUARDRAIL_RULES_FILE`, default `rules.yaml`) at
+startup. The README states this policy explicitly, and a dedicated test proves
+it (see Tests).
+
 **Interpretations needing your sign-off** (parameterizations, not new operators):
 1. `resource_type` and clause values may be **lists** (list = any-of) — needed
    for "ACL **or** policy" and the two public ACL values.
@@ -68,19 +74,26 @@ pytest golden fixtures in `tests/fixtures/`: one deliberately-bad `.tf` per
 rule plus one clean `.tf`; expected findings (rule id, resource address, line)
 asserted exactly.
 
+Plus a **rule-extensibility test** proving rules-are-data: copy `rules.yaml`,
+append a brand-new rule in YAML only (e.g. LOW / `aws_s3_bucket` /
+`tags absent`), point the engine at the copy via `GUARDRAIL_RULES_FILE`, scan
+a fixture, and assert the new rule id surfaces as a finding with full
+provenance — zero code changes anywhere.
+
 ## Repo hygiene
 Pinned `requirements.txt` (adds PyYAML, python-multipart, Jinja2; removes
 nothing blindly — pins from the working venv), MIT `LICENSE`, `.gitignore`, no
 secrets or tokens anywhere. README: architecture, exact score formula, run
-commands for Windows **and** Unix, CloudFormation-out-of-scope note, and a
+commands for Windows **and** Unix, CloudFormation-out-of-scope note, the
+rules-are-data policy (edit `rules.yaml`, zero code changes), and a
 statement that **no cloud resources were used by design**. Local git only —
 no remotes, no push.
 
 ## Delivery — compliance slices over the existing draft (1 slice = 1 turn, verified + committed)
 1. YAML rule engine skeleton + provenance (line + evidence) in the parser +
    **one rule (SSH-WORLD) end to end** + its golden fixture test.
-2. Remaining six rules in `rules.yaml` + fixtures; **delete** the Python
-   11-rule pack.
+2. Remaining six rules in `rules.yaml` + fixtures + the rule-extensibility
+   test; **delete** the Python 11-rule pack.
 3. Per-file + total score, server-rendered dashboard with inline-SVG trend
    (**delete** the Chart.js/Google-Fonts CDN page), multipart `POST /scans`.
 4. README, LICENSE, pinned requirements, polish; **delete** everything the

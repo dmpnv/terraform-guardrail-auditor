@@ -20,6 +20,10 @@
   approved**. After approval: 4 compliance slices, each verified with fixture
   tests and committed. A short Marp slide deck is planned post-MVP within the
   time budget.
+- Spec amended (Turn 3): **rules are user-editable data** — adding/changing a
+  rule = editing `rules.yaml` only, zero code changes; rules path configurable
+  via `GUARDRAIL_RULES_FILE`; proven by a dedicated extensibility test
+  (slice 2); policy stated in SPEC.md and README.
 - MVP milestone: **not yet reached**.
 - Draft leftovers still live outside git: `.venv/`, `data/guardrail.db`
   (both gitignored), and a draft uvicorn server still serving on
@@ -76,3 +80,21 @@
 - **How verified:** `git log --oneline` shows the draft commit then the
   governance commit; `git remote -v` is empty (no remotes, nothing pushed);
   test suite untouched since Turn 1 (11/11). Spec awaits approval.
+
+### Turn 3 — 2026-08-07 15:24 (+0200)
+
+**Prompt (verbatim):**
+
+> State explicitly in the spec and README: rules are user-editable data - adding or changing a rule means editing rules.yaml, with zero code changes. Add one test proving it: a fixture where a newly added YAML rule is picked up by the engine and produces a finding.
+
+- **Intent:** amend the spec (and README) to lock in rules-as-data
+  extensibility, and require a test that proves a new YAML rule works with
+  zero code changes.
+- **What changed:** SPEC.md — explicit user-editable-rules statement with a
+  configurable rules path (`GUARDRAIL_RULES_FILE`), a rule-extensibility test
+  added to the Tests section and to slice 2, README requirement extended;
+  README.md — the draft's "rules are Python functions" paragraph replaced
+  with the rules-are-data policy plus an honest status note that the draft
+  still ships Python rules until slice 2. No implementation code touched.
+- **How verified:** documentation-only diff (`git show --stat`); remotes
+  still absent. Spec remains **awaiting approval**.

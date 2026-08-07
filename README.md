@@ -73,9 +73,13 @@ curl -s -X POST http://127.0.0.1:8011/api/v1/scans \
 | GR-S3-003 | HIGH | Buckets enable all four public-access-block settings |
 | GR-SEC-001 | CRITICAL | No hardcoded secrets (password/token/*_key literals) |
 
-Rules live in `app/engine/rules.py` as a registry — one decorated function per
-guardrail with severity, remediation, and CIS/NIST references. Adding a rule is
-adding one function.
+**Rules are user-editable data.** Adding or changing a guardrail means editing
+`rules.yaml` — with zero code changes; the engine loads the pack at startup
+from a configurable path (`GUARDRAIL_RULES_FILE`). A dedicated test proves it:
+a newly added YAML rule is picked up by the engine and produces a finding.
+*(Status note: the committed draft still ships rules as Python code in
+`app/engine/rules.py`; the migration to `rules.yaml` is governed by `SPEC.md`
+and lands in slice 2.)*
 
 ## Tests
 
