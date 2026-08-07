@@ -1,3 +1,4 @@
+import re
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
@@ -15,7 +16,7 @@ from .api.routes import read_tf_uploads, router
 from .db import get_db, init_db
 from .engine.scanner import run_scan
 from .engine.yaml_engine import load_rules
-from .models import Finding, Scan
+from .models import Finding, Scan, ScanFile
 
 TEMPLATES = Jinja2Templates(directory=str(Path(__file__).resolve().parent / "templates"))
 
@@ -33,6 +34,46 @@ FORM_ERRORS = {
     "no_files": "Choose at least one .tf file to scan.",
     "limits": "Upload rejected: too many files or a file over the size limit.",
 }
+
+
+_ANCHOR_RE = re.compile(r"[^a-z0-9]+")
+
+
+def anchor_base(path: str) -> str:
+    """Sanitized fragment-anchor prefix for a source file, e.g.
+    'main.tf' -> 'src-main-tf' (flagged line 23 -> #src-main-tf-L23)."""
+    return "src-" + _ANCHOR_RE.sub("-", path.lower()).strip("-")
+
+
+def _source_views(stored_files: list, findings: list, file_scores: dict) -> list:
+    """Annotated source model for the template. Findings are the (already
+    severity-filtered) rows for the displayed scan, so the filter chips apply
+    to the source column too. Rendering stays escaped text — never raw HTML.
+    """
+    by_line: dict = {}
+    for f in findings:
+        if f.line:
+            by_line.setdefault((f.file, f.line), []).append(f)
+
+    views = []
+    for sf in stored_files:
+        lines = sf.content.split("\n")
+        if lines and lines[-1] == "":
+            lines.pop()
+        rows = []
+        for n, text in enumerate(lines, start=1):
+            marks = by_line.get((sf.path, n), [])
+            worst = min(marks, key=lambda m: m.severity_rank).severity if marks else None
+            rows.append({"n": n, "text": text, "marks": marks, "worst": worst})
+        score = (file_scores or {}).get(sf.path)
+        views.append({
+            "path": sf.path,
+            "anchor": anchor_base(sf.path),
+            "score": score,
+            "band": score_band(score) if score is not None else None,
+            "rows": rows,
+        })
+    return views
 
 
 def score_band(score: float) -> dict:
@@ -145,6 +186,8 @@ def dashboard(
     counts = {s: 0 for s in SEVERITIES}
     findings: list = []
     file_rows: list = []
+    source_views: list = []
+    has_sources = False
     band = None
     if latest:
         counts.update(latest.severity_counts)
@@ -157,6 +200,12 @@ def dashboard(
             {"file": f, "score": s, "band": score_band(s)}
             for f, s in sorted((latest.file_scores or {}).items())
         ]
+        stored = db.scalars(
+            select(ScanFile).where(ScanFile.scan_id == latest.id).order_by(ScanFile.id)
+        ).all()
+        has_sources = bool(stored)
+        if has_sources:
+            source_views = _source_views(stored, findings, latest.file_scores)
 
     recent = db.scalars(
         select(Scan).order_by(Scan.created_at.desc(), Scan.id.desc()).limit(30)
@@ -178,6 +227,9 @@ def dashboard(
         "rules_loaded": len(load_rules()),
         "version": config.API_VERSION,
         "error_message": FORM_ERRORS.get(error) if error else None,
+        "source_views": source_views,
+        "has_sources": has_sources,
+        "anchor_for": anchor_base,
     })
 
 

@@ -34,6 +34,11 @@ class Scan(Base):
         cascade="all, delete-orphan",
         order_by="Finding.severity_rank",
     )
+    source_files: Mapped[list[ScanFile]] = relationship(
+        back_populates="scan",
+        cascade="all, delete-orphan",
+        order_by="ScanFile.id",
+    )
 
     @property
     def findings_count(self) -> int:
@@ -45,6 +50,21 @@ class Scan(Base):
         for f in self.findings:
             counts[f.severity] = counts.get(f.severity, 0) + 1
         return counts
+
+
+class ScanFile(Base):
+    """Uploaded source text, persisted at scan creation (SPEC.md, Turn 14
+    amendment) so the dashboard can render an annotated source view. Size is
+    already capped by the shared upload limits."""
+
+    __tablename__ = "files"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id", ondelete="CASCADE"), index=True)
+    path: Mapped[str] = mapped_column(String(500))
+    content: Mapped[str] = mapped_column(Text)
+
+    scan: Mapped[Scan] = relationship(back_populates="source_files")
 
 
 class Finding(Base):

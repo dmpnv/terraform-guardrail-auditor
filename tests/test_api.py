@@ -111,3 +111,33 @@ def test_dashboard_form_upload_redirects_and_renders(client):
     assert "form-upload" in page.text          # the new scan is the latest
     assert "RDS-PUBLIC" in page.text           # its finding renders
     assert "form_rds.tf" in page.text          # per-file scores block
+
+    # Turn-14 amendment: annotated source view with anchors and annotations
+    assert 'id="src-form-rds-tf-L2"' in page.text            # flagged line anchor
+    assert 'href="#src-form-rds-tf-L2"' in page.text         # list links to source
+    assert "publicly_accessible = true" in page.text         # escaped source text
+    assert "RDS instance is publicly accessible." in page.text  # annotation message
+
+
+def test_dashboard_without_stored_sources_shows_note(client):
+    """Scans recorded before the files table existed have no stored sources:
+    the findings list renders full-width with a muted note — never an error."""
+    content = ('resource "aws_ebs_volume" "v" {\n'
+               '  availability_zone = "us-east-1a"\n'
+               '  size = 5\n'
+               '}\n')
+    r = post_scan(client, [("legacy.tf", content)], label="legacy-sim")
+    assert r.status_code == 201, r.text
+    sid = r.json()["id"]
+
+    from app.db import SessionLocal
+    from app.models import ScanFile
+    with SessionLocal() as db:
+        db.query(ScanFile).filter(ScanFile.scan_id == sid).delete()
+        db.commit()
+
+    page = client.get("/")
+    assert page.status_code == 200
+    assert "Source not stored for this scan." in page.text
+    assert "EBS-NO-ENCRYPTION" in page.text    # findings list still renders
+    assert 'id="src-legacy-tf' not in page.text  # no source column

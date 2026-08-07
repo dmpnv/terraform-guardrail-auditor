@@ -35,8 +35,7 @@ a:hover{text-decoration:underline}
 .card>.eyebrow{display:block;margin-bottom:14px}
 .row{display:grid;gap:20px;margin-bottom:20px}
 .row.hero{grid-template-columns:300px 1fr}
-.row.mid{grid-template-columns:1.6fr 1fr}
-.stack{display:flex;flex-direction:column;gap:20px}
+.row.two{grid-template-columns:1fr 1fr}
 
 /* score */
 .score-num{font:650 46px/1 var(--mono);letter-spacing:-.02em}
@@ -114,6 +113,34 @@ td .mono{font-size:12px}
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fix{color:var(--muted);font-size:11.5px;margin-top:5px}
 .empty-msg{padding:18px 0;color:var(--ink-2)}
+.note-muted{color:var(--muted);font-size:12px;margin-bottom:12px}
+
+/* two-column findings: annotated source (left) + list (right) */
+.split{display:grid;grid-template-columns:1.15fr 1fr;gap:20px;align-items:start}
+.srccol{min-width:0}
+.listcol{min-width:0}
+.srcfile{border:1px solid var(--grid);border-radius:10px;margin-bottom:16px;overflow:hidden}
+.srcfile:last-child{margin-bottom:0}
+.srchead{display:flex;align-items:center;gap:12px;background:var(--surface-2);
+  border-bottom:1px solid var(--grid);padding:8px 12px}
+.srchead .name{flex:1;font:600 12px var(--mono);color:var(--ink);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srchead .val{font:600 12px var(--mono)}
+.srcbody{overflow-x:auto;padding:6px 0;background:var(--bg)}
+.srcline{display:flex;border-left:3px solid transparent;padding:0 10px 0 6px}
+.srcline .ln{width:32px;flex:none;text-align:right;margin-right:12px;
+  font:11px/1.7 var(--mono);color:var(--muted);user-select:none}
+.srcline .lt{font:11.5px/1.7 var(--mono);color:var(--ink-2);white-space:pre}
+.srcline.hit .lt{color:var(--ink)}
+.srcline:target{outline:1px solid var(--accent);outline-offset:-1px}
+.srcnote{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  margin:2px 10px 6px 48px;padding:5px 10px;border-radius:6px;
+  background:var(--surface-2);font-size:11.5px;color:var(--ink-2)}
+.srcnote .mono{font-size:11px;color:var(--ink)}
+a.loc:hover{text-decoration:underline}
+
+/* merged posture panel */
+.posture .tiles{margin-bottom:16px}
 
 /* empty state */
 .hero-empty{max-width:640px;margin:36px auto}
@@ -128,8 +155,11 @@ footer{border-top:1px solid var(--border);padding-top:14px;display:flex;
   gap:18px;flex-wrap:wrap;font:11px var(--mono);color:var(--muted)}
 
 @media (max-width:940px){
-  .row.hero,.row.mid{grid-template-columns:1fr}
+  .row.hero,.row.two{grid-template-columns:1fr}
   .tiles{grid-template-columns:repeat(2,1fr)}
+  .split{grid-template-columns:1fr}
+  .srccol{order:2}
+  .listcol{order:1}
 }
 </style>
 </head>
@@ -184,8 +214,8 @@ footer{border-top:1px solid var(--border);padding-top:14px;display:flex;
       {% if latest.parse_errors %}<div style="color:#fab219">⚠ {{ latest.parse_errors|length }} file(s) could not be parsed</div>{% endif %}
     </div>
   </div>
-  <div class="card">
-    <span class="eyebrow">Findings by severity — latest scan</span>
+  <div class="card posture">
+    <span class="eyebrow">Security posture — latest scan</span>
     <div class="tiles">
       {% for s in severities %}
       <div class="tile">
@@ -196,12 +226,6 @@ footer{border-top:1px solid var(--border);padding-top:14px;display:flex;
       </div>
       {% endfor %}
     </div>
-  </div>
-</section>
-
-<section class="row mid">
-  <div class="card">
-    <span class="eyebrow">Score trend — last {{ trend.points|length }} scan(s)</span>
     <svg viewBox="0 0 {{ trend.w }} {{ trend.h }}" width="100%" role="img"
          aria-label="Guardrail score across scans, 0 to 100">
       {% for g in trend.gridlines %}
@@ -228,28 +252,29 @@ footer{border-top:1px solid var(--border);padding-top:14px;display:flex;
       {% endfor %}
     </svg>
   </div>
-  <div class="stack">
-    <div class="card upload">
-      <span class="eyebrow">Run a scan</span>
-      {% if error_message %}<div class="form-error">{{ error_message }}</div>{% endif %}
-      <form method="post" action="/" enctype="multipart/form-data">
-        <label for="files">Terraform files</label>
-        <input id="files" type="file" name="files" multiple accept=".tf" required>
-        <label for="label">Scan label (optional)</label>
-        <input id="label" type="text" name="label" maxlength="200" placeholder="payments-prod baseline">
-        <button type="submit">Scan files</button>
-      </form>
+</section>
+
+<section class="row two">
+  <div class="card upload">
+    <span class="eyebrow">Run a scan</span>
+    {% if error_message %}<div class="form-error">{{ error_message }}</div>{% endif %}
+    <form method="post" action="/" enctype="multipart/form-data">
+      <label for="files">Terraform files</label>
+      <input id="files" type="file" name="files" multiple accept=".tf" required>
+      <label for="label">Scan label (optional)</label>
+      <input id="label" type="text" name="label" maxlength="200" placeholder="payments-prod baseline">
+      <button type="submit">Scan files</button>
+    </form>
+  </div>
+  <div class="card">
+    <span class="eyebrow">Per-file scores — latest scan</span>
+    {% for fr in file_rows %}
+    <div class="file-row">
+      <span class="name">{{ fr.file }}</span>
+      <span class="track"><i style="width:{{ fr.score }}%;background:{{ fr.band.color }}"></i></span>
+      <span class="val" style="color:{{ fr.band.color }}">{{ "%g"|format(fr.score) }}</span>
     </div>
-    <div class="card">
-      <span class="eyebrow">Per-file scores — latest scan</span>
-      {% for fr in file_rows %}
-      <div class="file-row">
-        <span class="name">{{ fr.file }}</span>
-        <span class="track"><i style="width:{{ fr.score }}%;background:{{ fr.band.color }}"></i></span>
-        <span class="val" style="color:{{ fr.band.color }}">{{ "%g"|format(fr.score) }}</span>
-      </div>
-      {% endfor %}
-    </div>
+    {% endfor %}
   </div>
 </section>
 
@@ -265,6 +290,9 @@ footer{border-top:1px solid var(--border);padding-top:14px;display:flex;
       {% endfor %}
     </nav>
   </div>
+  {% if not has_sources %}<div class="note-muted">Source not stored for this scan.</div>{% endif %}
+
+  {% set list_table %}
   {% if findings %}
   <div class="table-scroll">
     <table>
@@ -277,7 +305,7 @@ footer{border-top:1px solid var(--border);padding-top:14px;display:flex;
           </span></td>
           <td class="mono">{{ f.rule_id }}</td>
           <td class="mono">{{ f.resource_address }}</td>
-          <td class="loc">{{ f.file }}{% if f.line %}:{{ f.line }}{% endif %}</td>
+          <td>{% if f.line and has_sources %}<a class="loc" href="#{{ anchor_for(f.file) }}-L{{ f.line }}">{{ f.file }}:{{ f.line }}</a>{% else %}<span class="loc">{{ f.file }}{% if f.line %}:{{ f.line }}{% endif %}</span>{% endif %}</td>
           <td>
             {{ f.message }}
             {% if f.evidence %}<br><span class="evidence">{{ f.evidence }}</span>{% endif %}
@@ -292,6 +320,41 @@ footer{border-top:1px solid var(--border);padding-top:14px;display:flex;
   <div class="empty-msg">No {{ sev_meta[active_severity].label }} findings in this scan — pick another filter.</div>
   {% else %}
   <div class="empty-msg">No findings. Every guardrail check passed for this scan.</div>
+  {% endif %}
+  {% endset %}
+
+  {% if has_sources %}
+  <div class="split">
+    <div class="srccol">
+      {% for v in source_views %}
+      <div class="srcfile">
+        <div class="srchead">
+          <span class="name">{{ v.path }}</span>
+          {% if v.score is not none %}<span class="val" style="color:{{ v.band.color }}">{{ "%g"|format(v.score) }}</span>{% endif %}
+        </div>
+        <div class="srcbody">
+          {% for r in v.rows %}
+          <div class="srcline{% if r.worst %} hit{% endif %}"{% if r.marks %} id="{{ v.anchor }}-L{{ r.n }}"{% endif %}{% if r.worst %} style="border-left-color:{{ sev_meta[r.worst].color }};background:{{ sev_meta[r.worst].color }}14"{% endif %}>
+            <span class="ln">{{ r.n }}</span><span class="lt">{{ r.text }}</span>
+          </div>
+          {% for m in r.marks %}
+          <div class="srcnote">
+            <span class="badge" style="border-color:{{ sev_meta[m.severity].color }}66">
+              <i class="glyph" style="color:{{ sev_meta[m.severity].color }}">{{ sev_meta[m.severity].glyph }}</i>{{ sev_meta[m.severity].label }}
+            </span>
+            <span class="mono">{{ m.rule_id }}</span>
+            <span>{{ m.message }}</span>
+          </div>
+          {% endfor %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="listcol">{{ list_table }}</div>
+  </div>
+  {% else %}
+  {{ list_table }}
   {% endif %}
 </div>
 

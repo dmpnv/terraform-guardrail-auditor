@@ -6,7 +6,7 @@ from typing import Iterable
 
 from sqlalchemy.orm import Session
 
-from ..models import Finding, Scan
+from ..models import Finding, Scan, ScanFile
 from .parser import ParsedProject, TFResource, parse_files
 from .yaml_engine import SEVERITY_RANK, SEVERITY_WEIGHT, evaluate_clause, load_rules
 
@@ -106,7 +106,8 @@ def run_scan(
 ) -> Scan:
     started = time.perf_counter()
     rules = load_rules()
-    project = parse_files(files)
+    named = list(files)
+    project = parse_files(named)
     source = ", ".join(project.files)[:490] or "upload"
 
     findings, stats = evaluate(project, rules)
@@ -119,6 +120,9 @@ def run_scan(
         **stats,
     )
     scan.findings = [Finding(**f) for f in findings]
+    # SPEC.md Turn-14 amendment: persist the uploaded text (already size-capped
+    # by the shared upload limits) for the dashboard's annotated source view.
+    scan.source_files = [ScanFile(path=p, content=t) for p, t in named]
     db.add(scan)
     db.commit()
     db.refresh(scan)

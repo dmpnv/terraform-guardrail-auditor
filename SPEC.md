@@ -83,12 +83,35 @@ as a data URI.
 `.tf`) + optional label + submit posting to a dashboard-side `POST /` that
 reuses run_scan under the API's file count/size limits and redirects back to
 `GET /` (Post/Redirect/Get — the user never lands on raw JSON).
+**Layout amendment (Turn 14), same single page and same guarantees:**
+the severity badges row and the score trend merge into ONE "Security posture"
+panel (badges on top, trend beneath — both exactly as informative as before);
+the freed space goes to the findings area, which becomes two columns:
+**left**, an annotated source view of the displayed scan's stored files (per
+file: filename + per-file score header, then the file text as escaped
+monospace lines with line numbers; lines that produced findings are
+highlighted in the severity color and carry an annotation line beneath —
+severity badge + rule id + message; each flagged line has an anchor id of the
+form `#src-<sanitized-file>-L<n>`, e.g. `#src-main-tf-L23`); **right**, the
+findings list as before, its `file:line` location rendered as a plain
+fragment link jumping to the highlighted line. The severity filter chips
+apply to both columns. On narrow screens the columns stack, findings list
+first. Scans recorded before the `files` table existed render the findings
+list full-width with one muted note ("Source not stored for this scan.") —
+never an error. The source is rendered as escaped text only (Jinja
+autoescape stays on, never raw HTML); anchors are native fragment links.
+
 **Nothing beyond that list: no client JavaScript, no chart libraries, no CDN,
 no webfonts, no new pages — zero external requests.**
 
 ## Storage & scoring
-SQLite only (`data/guardrail.db`, SQLAlchemy), tables `scans` and `findings`;
-history persists across runs to draw the trend. Score (formula **and worked
+SQLite only (`data/guardrail.db`, SQLAlchemy), tables `scans`, `findings` and
+— amendment (Turn 14) — `files` (`scan_id`, `path`, `content`): the uploaded
+Terraform text is persisted at scan creation from the shared upload helper's
+output (both the API path and the dashboard form path), under the API's
+existing file count/size caps. No API surface changes. Scans recorded before
+the amendment have no stored sources; the dashboard degrades gracefully (see
+Dashboard). History persists across runs to draw the trend. Score (formula **and worked
 numeric example** go in README): weights CRITICAL=10, HIGH=5, MEDIUM=2, LOW=1;
 `score = 100 × (1 − Σ weight(failed checks) / Σ weight(evaluated checks))`,
 rounded to 1 decimal; no evaluated checks → 100. Computed **per file and per
@@ -116,8 +139,11 @@ A **companion negative fixture**: a bucket plus its linked
 asserts **zero findings for rule 4** (S3-NO-ENCRYPTION), guarding the
 `companion_type` mechanism against false positives.
 
-A **dashboard form e2e test** (amendment, Turn 13): multipart form POST to
-`/` → 303 redirect → `GET /` renders the newly created scan.
+A **dashboard form e2e test** (amendment, Turn 13; extended Turn 14):
+multipart form POST to `/` → 303 redirect → `GET /` renders the newly created
+scan, the annotated source block, the flagged line's anchor id, and its
+annotation (rule id + message). Plus a **no-stored-source fallback test**: a
+scan without rows in `files` renders the muted note instead of failing.
 
 And a **score-formula test**: the README's worked example as a fixture
 (public + unencrypted S3 bucket, security group with SSH 22 open to
