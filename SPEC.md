@@ -106,6 +106,18 @@ list full-width with one muted note ("Source not stored for this scan.") —
 never an error. The source is rendered as escaped text only (Jinja
 autoescape stays on, never raw HTML); anchors are native fragment links.
 
+**Theming amendment (Turn 19):** the palette lives in CSS custom properties;
+a dark and a light theme ship. Header theme switcher with three states —
+System / Dark / Light — rendered as plain link chips. System is the default:
+with no explicit choice the page follows `prefers-color-scheme` via media
+queries. An explicit choice is stored in a cookie by a tiny route
+(`GET /theme/system|dark|light`) that sets or clears the cookie and
+303-redirects back to `/`; the page renders `html[data-theme]` from the
+cookie. Severity badges, highlighted source lines, annotation rows, per-file
+meters and the trend SVG all take their colors from the CSS variables and
+stay readable in both themes; the active switcher state is marked visually,
+not by color alone. No JavaScript anywhere.
+
 **Nothing beyond that list: no client JavaScript, no chart libraries, no CDN,
 no webfonts, no new pages — zero external requests.**
 
@@ -143,6 +155,10 @@ A **companion negative fixture**: a bucket plus its linked
 `aws_s3_bucket_server_side_encryption_configuration` in the same file —
 asserts **zero findings for rule 4** (S3-NO-ENCRYPTION), guarding the
 `companion_type` mechanism against false positives.
+
+**Theme tests** (amendment, Turn 19): `GET /theme/light` sets the cookie and
+303s to `/`; `GET /` with the cookie renders the `data-theme` attribute;
+without a cookie there is no `data-theme` override (system default).
 
 A **dashboard form e2e test** (amendment, Turn 13; extended Turn 14):
 multipart form POST to `/` → 303 redirect → `GET /` renders the newly created

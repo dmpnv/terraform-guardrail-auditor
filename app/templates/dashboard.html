@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en"{% if theme %} data-theme="{{ theme }}"{% endif %}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,15 +7,53 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%233987e5' d='M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3z'/%3E%3Cpath fill='%230c1626' d='m10.6 14.6-2.1-2.1 1.1-1.1 1 1 3.8-3.8 1.1 1.1-4.9 4.9z'/%3E%3C/svg%3E">
 <style>
 /* Zero external dependencies: system fonts, inline CSS, inline SVG, no JS.
-   Type scale: 10 / 11 / 12 / 13.5 / 15 / 17 / 46. Spacing: 8/12/16/20/24. */
+   Theming (Turn 19): every color below is a CSS custom property.
+   Dark is the base look; System (no cookie) follows prefers-color-scheme;
+   an explicit cookie stamps html[data-theme] and wins in both directions.
+   Status colors keep >= 3:1 contrast on their surface in BOTH themes
+   (validated); identity is always glyph + text label, never hue alone. */
 :root{
+  color-scheme:dark;
   --bg:#0c1626; --surface:#121e31; --surface-2:#182842;
   --ink:#f2f6fc; --ink-2:#a8b7cc; --muted:#6b7a92;
-  --grid:#223350; --border:rgba(255,255,255,.08); --accent:#3987e5;
+  --grid:#223350; --border:rgba(255,255,255,.08);
+  --accent:#3987e5; --accent-ink:#0b1220;
+  --crit:#d03b3b; --high:#ec835a; --med:#fab219; --low:#8a97ab;
+  --good:#0ca30c;
   --mono:ui-monospace,Consolas,monospace;
 }
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    color-scheme:light;
+    --bg:#f4f6f9; --surface:#ffffff; --surface-2:#e9eef5;
+    --ink:#111c2b; --ink-2:#415063; --muted:#64748b;
+    --grid:#d8dfe8; --border:rgba(17,28,43,.10);
+    --accent:#2a78d6; --accent-ink:#ffffff;
+    --crit:#c02b2b; --high:#c2410c; --med:#8a6a00; --low:#5b6b80;
+    --good:#15803d;
+  }
+}
+:root[data-theme="light"]{
+  color-scheme:light;
+  --bg:#f4f6f9; --surface:#ffffff; --surface-2:#e9eef5;
+  --ink:#111c2b; --ink-2:#415063; --muted:#64748b;
+  --grid:#d8dfe8; --border:rgba(17,28,43,.10);
+  --accent:#2a78d6; --accent-ink:#ffffff;
+  --crit:#c02b2b; --high:#c2410c; --med:#8a6a00; --low:#5b6b80;
+  --good:#15803d;
+}
+
+/* severity + band slots: components read var(--sev) */
+.sev-CRITICAL{--sev:var(--crit)}
+.sev-HIGH{--sev:var(--high)}
+.sev-MEDIUM{--sev:var(--med)}
+.sev-LOW{--sev:var(--low)}
+.band-good{--sev:var(--good)}
+.band-warn{--sev:var(--med)}
+.band-risk{--sev:var(--high)}
+.band-crit{--sev:var(--crit)}
+
 *{box-sizing:border-box;margin:0;padding:0}
-html{color-scheme:dark}
 body{background:var(--bg);color:var(--ink);
   font:13.5px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
 a{color:var(--accent);text-decoration:none}
@@ -29,6 +67,13 @@ a:hover{text-decoration:underline}
 .eyebrow{font-family:var(--mono);font-size:10px;font-weight:600;
   letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .spacer{flex:1}
+.theme-nav{display:flex;gap:6px;margin-right:8px}
+.tchip{display:inline-flex;align-items:center;gap:5px;
+  font:550 11px var(--mono);color:var(--ink-2);
+  border:1px solid var(--grid);border-radius:99px;padding:4px 11px}
+.tchip:hover{text-decoration:none;color:var(--ink);border-color:var(--muted)}
+.tchip.on{background:var(--surface-2);color:var(--ink);
+  border-color:var(--muted);font-weight:700}
 
 .card{background:var(--surface);border:1px solid var(--border);
   border-radius:12px;padding:20px}
@@ -38,28 +83,37 @@ a:hover{text-decoration:underline}
 .row.two{grid-template-columns:1fr 1fr}
 
 /* score */
-.score-num{font:650 46px/1 var(--mono);letter-spacing:-.02em}
+.score-num{font:650 46px/1 var(--mono);letter-spacing:-.02em;color:var(--sev)}
 .score-num small{font-size:20px;color:var(--muted);font-weight:500}
 .band{display:inline-flex;align-items:center;gap:7px;margin-top:10px;
   font:600 11px var(--mono);letter-spacing:.04em;color:var(--ink);
-  border:1px solid;border-radius:99px;padding:4px 12px}
+  border:1px solid color-mix(in srgb,var(--sev) 45%,transparent);
+  border-radius:99px;padding:4px 12px}
+.band .glyph{color:var(--sev)}
 .meta{color:var(--ink-2);font-size:12px;margin-top:12px}
 .meta div{margin-top:3px}
+.meta .warn{color:var(--med)}
 
 /* badges — one system, identical in tiles and table */
 .badge{display:inline-flex;align-items:center;gap:7px;
   font:600 11px var(--mono);letter-spacing:.03em;color:var(--ink);
-  border:1px solid;border-radius:7px;padding:3px 10px;white-space:nowrap}
+  border:1px solid color-mix(in srgb,var(--sev) 42%,transparent);
+  border-radius:7px;padding:3px 10px;white-space:nowrap}
+.badge .glyph{color:var(--sev)}
 .glyph{font-style:normal;font-size:11px;line-height:1}
 .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 .tile{background:var(--surface-2);border:1px solid var(--border);
   border-radius:10px;padding:14px}
 .tile .n{font:650 26px/1.2 var(--mono);margin-top:8px}
 
-/* trend */
+/* trend (inline SVG, colors via variables) */
 svg text{font:10px var(--mono);fill:var(--muted)}
 svg text.val{fill:var(--ink-2)}
 svg text.val-last{fill:var(--ink);font-weight:700}
+.tgrid{stroke:var(--grid)}
+.tline{stroke:var(--accent)}
+.tpoint{fill:var(--accent)}
+.tring{stroke:var(--accent)}
 
 /* upload form */
 .upload label{display:block;font-family:var(--mono);font-size:10px;
@@ -73,21 +127,21 @@ svg text.val-last{fill:var(--ink);font-weight:700}
 .upload input[type=text]{width:100%;background:var(--bg);
   border:1px solid var(--grid);border-radius:8px;color:var(--ink);
   font:12.5px var(--mono);padding:9px 10px}
-.upload button{margin-top:14px;background:var(--accent);color:#0b1220;
+.upload button{margin-top:14px;background:var(--accent);color:var(--accent-ink);
   border:0;border-radius:8px;padding:9px 16px;font:650 13px system-ui;cursor:pointer}
-.upload button:hover{background:#4c95ec}
-.form-error{color:#f0a9a9;font-size:12px;margin-bottom:10px}
+.upload button:hover{filter:brightness(1.08)}
+.form-error{color:var(--crit);font-size:12px;margin-bottom:10px}
 
 /* per-file scores */
 .file-row{display:flex;align-items:center;gap:12px;padding:7px 0;
-  border-bottom:1px solid rgba(255,255,255,.05)}
+  border-bottom:1px solid var(--border)}
 .file-row:last-child{border-bottom:0}
 .file-row .name{flex:1;font:12px var(--mono);color:var(--ink-2);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.file-row .val{font:600 12px var(--mono);width:44px;text-align:right}
+.file-row .val{font:600 12px var(--mono);width:44px;text-align:right;color:var(--sev)}
 .track{width:110px;height:5px;border-radius:3px;background:var(--grid);
   overflow:hidden;flex:none}
-.track i{display:block;height:100%;border-radius:3px}
+.track i{display:block;height:100%;border-radius:3px;background:var(--sev)}
 
 /* findings */
 .findings-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
@@ -96,6 +150,7 @@ svg text.val-last{fill:var(--ink);font-weight:700}
 .chip{display:inline-flex;align-items:center;gap:6px;
   font:550 11px var(--mono);color:var(--ink-2);
   border:1px solid var(--grid);border-radius:99px;padding:5px 12px}
+.chip .glyph{color:var(--sev)}
 .chip:hover{text-decoration:none;color:var(--ink);border-color:var(--muted)}
 .chip.on{background:var(--surface-2);color:var(--ink);border-color:var(--muted)}
 .table-scroll{overflow-x:auto}
@@ -103,10 +158,10 @@ table{width:100%;border-collapse:collapse;font-size:12.5px}
 th{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.12em;
   text-transform:uppercase;color:var(--muted);text-align:left;
   padding:8px 10px;border-bottom:1px solid var(--grid);white-space:nowrap}
-td{padding:11px 10px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:top}
-tr:hover td{background:rgba(255,255,255,.02)}
+td{padding:11px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:hover td{background:color-mix(in srgb,var(--ink) 3%,transparent)}
 td .mono{font-size:12px}
-.loc{font-family:var(--mono);font-size:12px;color:var(--ink-2);white-space:nowrap}
+.loc{font-family:var(--mono);font-size:12px;color:var(--ink-2)}
 .evidence{display:inline-block;font-family:var(--mono);font-size:11px;
   background:var(--bg);border:1px solid var(--grid);border-radius:6px;
   padding:3px 8px;margin-top:5px;color:var(--ink-2);max-width:480px;
@@ -119,18 +174,30 @@ td .mono{font-size:12px}
 .split{display:grid;grid-template-columns:1.15fr 1fr;gap:20px;align-items:start}
 .srccol{min-width:0}
 .listcol{min-width:0}
+/* compact right table: fixed layout; location never wraps mid-value,
+   resource truncates with an ellipsis (full value in title=) */
+.listcol table{table-layout:fixed;width:100%}
+.listcol th:nth-child(1){width:86px}
+.listcol th:nth-child(2){width:92px}
+.listcol th:nth-child(4){width:136px;min-width:136px}
+.listcol th,.listcol td{padding:9px 8px}
+.listcol td.res{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.listcol td .loc,.listcol .loc{white-space:nowrap}
+.listcol td:nth-child(2){overflow-wrap:anywhere}
 .srcfile{border:1px solid var(--grid);border-radius:10px;margin-bottom:16px;overflow:hidden}
 .srcfile:last-child{margin-bottom:0}
 .srchead{display:flex;align-items:center;gap:12px;background:var(--surface-2);
   border-bottom:1px solid var(--grid);padding:8px 12px}
 .srchead .name{flex:1;font:600 12px var(--mono);color:var(--ink);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.srchead .val{font:600 12px var(--mono)}
+.srchead .val{font:600 12px var(--mono);color:var(--sev)}
 .srcbody{overflow-x:auto;overflow-y:auto;max-height:780px;padding:6px 0;background:var(--bg)}
 .srcline{display:flex;border-left:3px solid transparent;padding:0 10px 0 6px;scroll-margin-top:70px}
 .srcline .ln{width:32px;flex:none;text-align:right;margin-right:12px;
   font:11px/1.7 var(--mono);color:var(--muted);user-select:none}
 .srcline .lt{font:11.5px/1.7 var(--mono);color:var(--ink-2);white-space:pre}
+.srcline.hit{border-left-color:var(--sev);
+  background:color-mix(in srgb,var(--sev) 10%,transparent)}
 .srcline.hit .lt{color:var(--ink)}
 .srcline:target{outline:1px solid var(--accent);outline-offset:-1px}
 .srcnote{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
@@ -138,19 +205,6 @@ td .mono{font-size:12px}
   background:var(--surface-2);font-size:11.5px;color:var(--ink-2)}
 .srcnote .mono{font-size:11px;color:var(--ink)}
 a.loc:hover{text-decoration:underline}
-/* compact right-column table: fits its width, no horizontal scroll.
-   Fixed layout: the resource column absorbs the flex; locations stay on
-   one line in the common case and wrap only as a last resort. */
-.listcol table{table-layout:fixed;width:100%}
-.listcol th:nth-child(1){width:86px}
-.listcol th:nth-child(2){width:92px}
-.listcol th:nth-child(4){width:132px}
-.listcol th,.listcol td{padding:9px 8px}
-.listcol td{overflow-wrap:anywhere}
-.listcol .loc{white-space:normal;overflow-wrap:anywhere}
-
-/* merged posture panel */
-.posture .tiles{margin-bottom:16px}
 
 /* empty state */
 .hero-empty{max-width:640px;margin:36px auto}
@@ -183,6 +237,11 @@ footer{border-top:1px solid var(--border);padding-top:14px;display:flex;
     <span class="eyebrow">Terraform · Enterprise Security Guardrails</span>
   </div>
   <div class="spacer"></div>
+  <nav class="theme-nav" aria-label="Theme">
+    <a class="tchip {{ 'on' if not theme }}" href="/theme/system">{% if not theme %}✓ {% endif %}System</a>
+    <a class="tchip {{ 'on' if theme == 'dark' }}" href="/theme/dark">{% if theme == 'dark' %}✓ {% endif %}Dark</a>
+    <a class="tchip {{ 'on' if theme == 'light' }}" href="/theme/light">{% if theme == 'light' %}✓ {% endif %}Light</a>
+  </nav>
   <a href="/docs">API docs</a>
 </header>
 
@@ -212,26 +271,22 @@ footer{border-top:1px solid var(--border);padding-top:14px;display:flex;
 <section class="row hero">
   <div class="card">
     <span class="eyebrow">Risk score — latest scan</span>
-    <div class="score-num" style="color:{{ band.color }}">{{ latest.score }}<small> /100</small></div>
-    <span class="band" style="border-color:{{ band.color }}66">
-      <i class="glyph" style="color:{{ band.color }}">■</i>{{ band.label }}
-    </span>
+    <div class="score-num {{ band.cls }}">{{ latest.score }}<small> /100</small></div>
+    <span class="band {{ band.cls }}"><i class="glyph">■</i>{{ band.label }}</span>
     <div class="meta">
       <div>{{ latest.label or "(unlabeled)" }} · {{ latest.created_at.strftime("%b %d, %H:%M") }} UTC</div>
       <div>{{ latest.files_scanned }} file(s) · {{ latest.resources_scanned }} resources ·
            {{ latest.checks_failed }}/{{ latest.checks_total }} checks failed</div>
       <div>source: {{ latest.source }} · {{ latest.duration_ms }} ms</div>
-      {% if latest.parse_errors %}<div style="color:#fab219">⚠ {{ latest.parse_errors|length }} file(s) could not be parsed</div>{% endif %}
+      {% if latest.parse_errors %}<div class="warn">⚠ {{ latest.parse_errors|length }} file(s) could not be parsed</div>{% endif %}
     </div>
   </div>
   <div class="card posture">
     <span class="eyebrow">Security posture — latest scan</span>
-    <div class="tiles">
+    <div class="tiles" style="margin-bottom:16px">
       {% for s in severities %}
-      <div class="tile">
-        <span class="badge" style="border-color:{{ sev_meta[s].color }}66">
-          <i class="glyph" style="color:{{ sev_meta[s].color }}">{{ sev_meta[s].glyph }}</i>{{ sev_meta[s].label }}
-        </span>
+      <div class="tile sev-{{ s }}">
+        <span class="badge"><i class="glyph">{{ sev_meta[s].glyph }}</i>{{ sev_meta[s].label }}</span>
         <div class="n">{{ counts[s] }}</div>
       </div>
       {% endfor %}
@@ -239,21 +294,21 @@ footer{border-top:1px solid var(--border);padding-top:14px;display:flex;
     <svg viewBox="0 0 {{ trend.w }} {{ trend.h }}" width="100%" role="img"
          aria-label="Guardrail score across scans, 0 to 100">
       {% for g in trend.gridlines %}
-      <line x1="30" y1="{{ g.y }}" x2="{{ trend.grid_x2 }}" y2="{{ g.y }}" stroke="#223350" stroke-width="1"/>
+      <line class="tgrid" x1="30" y1="{{ g.y }}" x2="{{ trend.grid_x2 }}" y2="{{ g.y }}" stroke-width="1"/>
       <text x="4" y="{{ g.y + 3.5 }}">{{ g.label }}</text>
       {% endfor %}
       <text x="{{ trend.x_axis.first.x }}" y="{{ trend.x_axis.y }}" text-anchor="start">{{ trend.x_axis.first.text }}</text>
       {% if trend.points|length > 1 %}
       <text x="{{ trend.x_axis.last.x }}" y="{{ trend.x_axis.y }}" text-anchor="end">{{ trend.x_axis.last.text }}</text>
       {% endif %}
-      <polyline points="{{ trend.polyline }}" fill="none" stroke="#3987e5" stroke-width="2"
+      <polyline class="tline" points="{{ trend.polyline }}" fill="none" stroke-width="2"
                 stroke-linejoin="round" stroke-linecap="round"/>
       {% for p in trend.points %}
-      <circle cx="{{ p.x }}" cy="{{ p.y }}" r="{{ 5 if p is sameas trend.last else 3 }}" fill="#3987e5">
+      <circle class="tpoint" cx="{{ p.x }}" cy="{{ p.y }}" r="{{ 5 if p is sameas trend.last else 3 }}">
         <title>scan #{{ p.scan.id }}{% if p.scan.label %} — {{ p.scan.label }}{% endif %}: score {{ p.scan.score }}</title>
       </circle>
       {% if p is sameas trend.last %}
-      <circle cx="{{ p.x }}" cy="{{ p.y }}" r="8.5" fill="none" stroke="#3987e5" stroke-width="1.5" opacity="0.45"/>
+      <circle class="tring" cx="{{ p.x }}" cy="{{ p.y }}" r="8.5" fill="none" stroke-width="1.5" opacity="0.45"/>
       {% endif %}
       {% if p.labeled %}
       <text class="{{ 'val-last' if p is sameas trend.last else 'val' }}"
@@ -279,10 +334,10 @@ footer{border-top:1px solid var(--border);padding-top:14px;display:flex;
   <div class="card">
     <span class="eyebrow">Per-file scores — latest scan</span>
     {% for fr in file_rows %}
-    <div class="file-row">
+    <div class="file-row {{ fr.band.cls }}">
       <span class="name">{{ fr.file }}</span>
-      <span class="track"><i style="width:{{ fr.score }}%;background:{{ fr.band.color }}"></i></span>
-      <span class="val" style="color:{{ fr.band.color }}">{{ "%g"|format(fr.score) }}</span>
+      <span class="track"><i style="width:{{ fr.score }}%"></i></span>
+      <span class="val">{{ "%g"|format(fr.score) }}</span>
     </div>
     {% endfor %}
   </div>
@@ -294,8 +349,8 @@ footer{border-top:1px solid var(--border);padding-top:14px;display:flex;
     <nav class="chips" aria-label="Severity filter">
       <a class="chip {{ 'on' if not active_severity }}" href="/">All {{ latest.findings_count }}</a>
       {% for s in severities %}
-      <a class="chip {{ 'on' if active_severity == s }}" href="/?severity={{ s }}">
-        <i class="glyph" style="color:{{ sev_meta[s].color }}">{{ sev_meta[s].glyph }}</i>{{ sev_meta[s].label }} {{ counts[s] }}
+      <a class="chip sev-{{ s }} {{ 'on' if active_severity == s }}" href="/?severity={{ s }}">
+        <i class="glyph">{{ sev_meta[s].glyph }}</i>{{ sev_meta[s].label }} {{ counts[s] }}
       </a>
       {% endfor %}
     </nav>
@@ -308,11 +363,9 @@ footer{border-top:1px solid var(--border);padding-top:14px;display:flex;
     <tbody>
       {% for f in findings %}
       <tr>
-        <td><span class="badge" style="border-color:{{ sev_meta[f.severity].color }}66">
-          <i class="glyph" style="color:{{ sev_meta[f.severity].color }}">{{ sev_meta[f.severity].glyph }}</i>{{ sev_meta[f.severity].label }}
-        </span></td>
+        <td><span class="badge sev-{{ f.severity }}"><i class="glyph">{{ sev_meta[f.severity].glyph }}</i>{{ sev_meta[f.severity].label }}</span></td>
         <td class="mono">{{ f.rule_id }}</td>
-        <td class="mono">{{ f.resource_address }}</td>
+        <td class="mono res" title="{{ f.resource_address }}">{{ f.resource_address }}</td>
         <td>{% if f.line and has_sources %}<a class="loc" href="#{{ anchor_for(f.file) }}-L{{ f.line }}">{{ f.file }}:{{ f.line }}</a>{% else %}<span class="loc">{{ f.file }}{% if f.line %}:{{ f.line }}{% endif %}</span>{% endif %}</td>
         {% if not compact %}
         <td>
@@ -340,20 +393,18 @@ footer{border-top:1px solid var(--border);padding-top:14px;display:flex;
     <div class="srccol">
       {% for v in source_views %}
       <div class="srcfile">
-        <div class="srchead">
+        <div class="srchead {{ v.band.cls if v.band }}">
           <span class="name">{{ v.path }}</span>
-          {% if v.score is not none %}<span class="val" style="color:{{ v.band.color }}">{{ "%g"|format(v.score) }}</span>{% endif %}
+          {% if v.score is not none %}<span class="val">{{ "%g"|format(v.score) }}</span>{% endif %}
         </div>
         <div class="srcbody">
           {% for r in v.rows %}
-          <div class="srcline{% if r.worst %} hit{% endif %}"{% if r.marks %} id="{{ v.anchor }}-L{{ r.n }}"{% endif %}{% if r.worst %} style="border-left-color:{{ sev_meta[r.worst].color }};background:{{ sev_meta[r.worst].color }}14"{% endif %}>
+          <div class="srcline{% if r.worst %} hit sev-{{ r.worst }}{% endif %}"{% if r.marks %} id="{{ v.anchor }}-L{{ r.n }}"{% endif %}>
             <span class="ln">{{ r.n }}</span><span class="lt">{{ r.text }}</span>
           </div>
           {% for m in r.marks %}
           <div class="srcnote">
-            <span class="badge" style="border-color:{{ sev_meta[m.severity].color }}66">
-              <i class="glyph" style="color:{{ sev_meta[m.severity].color }}">{{ sev_meta[m.severity].glyph }}</i>{{ sev_meta[m.severity].label }}
-            </span>
+            <span class="badge sev-{{ m.severity }}"><i class="glyph">{{ sev_meta[m.severity].glyph }}</i>{{ sev_meta[m.severity].label }}</span>
             <span class="mono">{{ m.rule_id }}</span>
             <span>{{ m.message }}</span>
           </div>

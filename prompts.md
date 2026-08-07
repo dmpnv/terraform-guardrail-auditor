@@ -54,6 +54,14 @@
   TrendPoint / ScanSummaryOut folded into ScanOut), and `samples/`
   (fixtures are the canonical corpus; parser tests rewritten against them).
   A guard test pins the deletions (404/405).
+- **Theming shipped (Turn 19A):** palette in CSS custom properties; dark +
+  light themes; System/Dark/Light switcher as link chips (active state = ✓
+  glyph + filled chip, not color alone); System default via
+  prefers-color-scheme; explicit choice via cookie set by
+  GET /theme/{system|dark|light} with 303 PRG; html[data-theme] rendered
+  from the cookie; zero JS. Light status colors contrast-validated (all
+  ≥3:1 on white); severity identity everywhere = glyph + label. Also fixed:
+  location column no-wrap + min-width; resource column ellipsis + title.
 - **IPv6 gap closed as a DATA change (Turn 18):** spec amended first
   (SSH/RDP-WORLD checks gain `::/0` clauses; `::/0` removed from Out of
   scope and from README Known limitations). Two `open_port` clauses added
@@ -592,3 +600,36 @@
   the new fixture and flagged `ipv6_cidr_blocks = ["::/0"]` with full
   provenance (SSH-WORLD, aws_security_group.v6_bastion, line 12) while
   passing the scoped range; remotes still absent.
+
+### Turn 19 — 2026-08-07 18:13 (+0200) — three items (A / B / C), each its own commit
+
+**Prompt (verbatim):**
+
+> Three remaining work items, in order. Each is its own turn with its own commit. After the last one, stop and wait - the slide deck will come as a separate message.TURN A - theming (spec amendment to the dashboard section first):Extract the palette into CSS custom properties.Ship a dark theme and a light theme.Theme switcher in the header, three states:System / Dark / Light, rendered as plain links (chips).System is the default: with no explicit choicethe page follows prefers-color-scheme via media queries.An explicit choice is stored in a cookieby a tiny route: GET /theme/system,/theme/dark, /theme/light.The route sets or clears the cookieand 303-redirects back to /.The page renders the html data-theme attributefrom the cookie.No JavaScript anywhere; zero-JS and zero-CDNguarantees stay intact.Both themes must keep contrast: severity badges,highlighted source lines, annotation rows,per-file meters and the trend SVG all takecolors from the CSS variables,readable in each theme.The active switcher state is marked visually,not by color alone.Verify in the browser: dark and light,empty and populated states,and the round-trip back to System.Tests: GET /theme/light sets the cookieand 303s to /.GET / with the cookie rendersthe data-theme attribute.Without a cookie there is no data-themeoverride (system default).Also in this turn: in the right-hand findingstable the location still wraps mid-value(example: "score_formula.tf: 7").Make the location column no-wrap with amin-width; let the resource column truncatewith an ellipsis and the full valuein the title attribute.----TURN B - README "How it works" section.Own commit.Verify every factual claim against the codebefore committing; adjust wording only wherereality disagrees.Place the section right after the dashboardsection. Draft to adapt:The dashboard is a single server-rendered pagewith zero client JavaScript and zero externalrequests: every interaction is a plain HTTPidiom - links, one form POST, fragmentanchors, one theme cookie.State lives in the database and the URL,so every view is shareable: the severityfilter is a query parameter, a specificoffending line is a fragment anchor, thetheme (System/Dark/Light) is a cookie.Upload one or more .tf files through theform, or POST the same multipart requestto the API - both paths share one pipelineand one set of limits.The page then answers three questions atonce: what exactly is wrong and where(the annotated source view highlights eachoffending line, with rule and fix rightbeneath it); how much and how severe(the findings list, severity tiles andper-file scores); and is it getting better(the score trend across persisted scans).Rules are data: the pack loads fromrules.yaml on every scan, so adding aguardrail is a YAML edit with zero codechanges - the IPv6 world-open clauseswere added exactly that way.----TURN C - deck preparation note.No commit beyond prompts.md.When I ask for the Marp slide deck,plan a "How it works" slide with thiscontent, tightened to one slide:One server-rendered page - zero client JS,zero CDN: runs offline from a fresh clone.Upload via form or API - one sharedpipeline, same limits(multipart POST /api/v1/scans).Annotated source: every finding lands onits own line - file:line, evidence,fix beneath.Posture at a glance: severity tiles plusscore trend across persisted scans (SQLite).Rules are data (rules.yaml): a new guardrailis a YAML edit, zero code changes - provenlive by the IPv6 clauses and theextensibility test.Every view is a URL: filter = query param,code line = anchor, theme = cookie(System / Dark / Light).Acknowledge and stop after Turn B's commit.Do not start the deck until my next message.
+
+**Part A — theming + column fix (own commit):**
+
+- **Intent:** spec-first theming (CSS variables, dark/light, cookie-based
+  System/Dark/Light switcher, zero JS) plus the location/resource column
+  fix, browser-verified in all states.
+- **What changed:** SPEC.md dashboard section + Tests amended first. main.py:
+  `GET /theme/{choice}` (sets/clears cookie, 303 to /), dashboard reads the
+  cookie, SEV_META/score_band dropped hex for CSS classes. Template rebuilt
+  on custom properties: dark base, light under
+  `@media (prefers-color-scheme: light)` guarded by
+  `:root:not([data-theme="dark"])`, explicit `[data-theme="light"]` block;
+  severity/band slots (`--sev`) drive badges, highlights, annotations,
+  meters, score and the trend SVG (SVG styled via classes + variables);
+  switcher chips with ✓ + fill for the active state. Light status palette
+  chosen with the validator: all five ≥3:1 on white (light medium moved to
+  #8a6a00 to improve deutan separation 0.6→2.1; identity remains
+  glyph+label everywhere, per the status-color contract). Location column:
+  nowrap + min-width 136px; resource column: ellipsis + full value in
+  title. Theme test added (cookie set + 303, data-theme rendered, no
+  override without cookie).
+- **How verified:** pytest **35/35**; in Chrome — populated dark, populated
+  light (highlight washes, annotation rows, meters, trend all readable;
+  locations on one line), empty dark and empty light on a second
+  empty-database instance (cookie rides the host across ports), and the
+  round-trip back to ✓ System. Bonus observed: history >12 scans, so the
+  trend's selective labeling (first/min/max/last) is live as documented.

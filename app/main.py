@@ -3,8 +3,8 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
 
-from fastapi import (Depends, FastAPI, File, Form, HTTPException, Query,
-                     Request, UploadFile)
+from fastapi import (Cookie, Depends, FastAPI, File, Form, HTTPException,
+                     Query, Request, UploadFile)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -21,14 +21,16 @@ from .models import Finding, Scan, ScanFile
 TEMPLATES = Jinja2Templates(directory=str(Path(__file__).resolve().parent / "templates"))
 
 SEVERITIES = ("CRITICAL", "HIGH", "MEDIUM", "LOW")
-# Status colors validated against the dark surface (#121e31): contrast >= 3:1.
-# Hue never carries meaning alone: every use pairs a glyph + text label.
+# Colors live in the template's CSS custom properties (Turn-19 theming
+# amendment) — per-theme values, hue never alone: glyph + label everywhere.
 SEV_META = {
-    "CRITICAL": {"glyph": "▲", "color": "#d03b3b", "label": "Critical"},
-    "HIGH":     {"glyph": "◆", "color": "#ec835a", "label": "High"},
-    "MEDIUM":   {"glyph": "●", "color": "#fab219", "label": "Medium"},
-    "LOW":      {"glyph": "─", "color": "#8a97ab", "label": "Low"},
+    "CRITICAL": {"glyph": "▲", "label": "Critical"},
+    "HIGH":     {"glyph": "◆", "label": "High"},
+    "MEDIUM":   {"glyph": "●", "label": "Medium"},
+    "LOW":      {"glyph": "─", "label": "Low"},
 }
+
+THEMES = ("dark", "light")
 
 FORM_ERRORS = {
     "no_files": "Choose at least one .tf file to scan.",
@@ -77,14 +79,15 @@ def _source_views(stored_files: list, findings: list, file_scores: dict) -> list
 
 
 def score_band(score: float) -> dict:
-    """Color grade for a 0-100 risk score (always shown with its text label)."""
+    """Color grade for a 0-100 risk score (always shown with its text label).
+    `cls` selects a CSS variable so both themes stay readable."""
     if score >= 90:
-        return {"color": "#0ca30c", "label": "Healthy"}
+        return {"cls": "band-good", "label": "Healthy"}
     if score >= 70:
-        return {"color": "#fab219", "label": "Needs attention"}
+        return {"cls": "band-warn", "label": "Needs attention"}
     if score >= 50:
-        return {"color": "#ec835a", "label": "At risk"}
-    return {"color": "#d03b3b", "label": "Critical"}
+        return {"cls": "band-risk", "label": "At risk"}
+    return {"cls": "band-crit", "label": "Critical"}
 
 
 @asynccontextmanager
@@ -168,16 +171,32 @@ def _trend_geometry(scans: list) -> Optional[dict]:
     }
 
 
+@app.get("/theme/{choice}", include_in_schema=False)
+def set_theme(choice: str):
+    """Theme switcher (Turn-19 amendment): sets or clears the cookie and
+    303-redirects back to the dashboard. 'system' clears the override."""
+    resp = RedirectResponse("/", status_code=303)
+    if choice in THEMES:
+        resp.set_cookie("theme", choice, max_age=31536000,
+                        httponly=True, samesite="lax", path="/")
+    elif choice == "system":
+        resp.delete_cookie("theme", path="/")
+    return resp
+
+
 @app.get("/", include_in_schema=False)
 def dashboard(
     request: Request,
     severity: Optional[str] = Query(None),
     error: Optional[str] = Query(None),
+    theme: Optional[str] = Cookie(None),
     db: Session = Depends(get_db),
 ):
     sev = severity.upper() if severity else None
     if sev not in SEVERITIES:
         sev = None
+    if theme not in THEMES:
+        theme = None
 
     latest = db.scalars(
         select(Scan).order_by(Scan.created_at.desc(), Scan.id.desc()).limit(1)
@@ -230,6 +249,7 @@ def dashboard(
         "source_views": source_views,
         "has_sources": has_sources,
         "anchor_for": anchor_base,
+        "theme": theme,
     })
 
 

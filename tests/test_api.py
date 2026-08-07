@@ -98,6 +98,25 @@ def test_dashboard_severity_filter(client):
     assert "Critical" in r.text
 
 
+def test_theme_routes_and_rendering(client):
+    """Turn-19 amendment: cookie-based theming, zero JS."""
+    page = client.get("/")
+    assert '<html lang="en" data-theme' not in page.text    # system default
+
+    r = client.get("/theme/light", follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers["location"] == "/"
+    assert "theme=light" in r.headers.get("set-cookie", "")
+
+    page = client.get("/")                                  # cookie persisted
+    assert '<html lang="en" data-theme="light">' in page.text
+
+    r = client.get("/theme/system", follow_redirects=False)
+    assert r.status_code == 303
+    page = client.get("/")                                  # override cleared
+    assert '<html lang="en" data-theme' not in page.text
+
+
 def test_dashboard_form_upload_redirects_and_renders(client):
     """Amendment (Turn 13): plain-HTML form POST / -> 303 (PRG) -> GET /
     renders the newly created scan — the user never lands on raw JSON."""
