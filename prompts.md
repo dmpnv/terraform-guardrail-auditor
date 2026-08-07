@@ -633,3 +633,26 @@
   empty-database instance (cookie rides the host across ports), and the
   round-trip back to ✓ System. Bonus observed: history >12 scans, so the
   trend's selective labeling (first/min/max/last) is live as documented.
+
+**Part B — README "How it works" (own commit):**
+
+- **Intent:** add the section right after Dashboard, adapting the supplied
+  draft; verify every factual claim against the code first and adjust
+  wording only where reality disagrees.
+- **What changed:** section added. Claims verified: zero JS / zero external
+  requests ✓; interactions are links + one form POST + fragment anchors +
+  one theme cookie ✓; filter = query param ✓; line = fragment anchor ✓;
+  shared pipeline + limits (read_tf_uploads → run_scan for both paths) ✓;
+  trend across persisted scans ✓; rules.yaml loaded on every scan (inside
+  run_scan) ✓; IPv6 clauses were YAML-only ✓. Two wording adjustments
+  where reality disagreed: (1) the theme cookie is per-browser state, NOT
+  shareable URL state — the sentence now scopes "shareable" to filter +
+  anchor; (2) the draft said the annotated source shows "rule and fix
+  right beneath" the line — annotations render rule + MESSAGE only, so the
+  wording says "rule and its message". **Flagged for the user:** since
+  Turn 17 dropped Detail/Fix from the right column on the premise the
+  annotations carry them, remediation currently appears nowhere in the
+  split view (only in the no-source fallback table). Say the word and the
+  fix line joins the annotations — a two-line template change.
+- **How verified:** each claim traced to code (routes/main/scanner);
+  pytest **35/35** unchanged (doc-only diff).

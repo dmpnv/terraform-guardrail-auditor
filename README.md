@@ -110,6 +110,30 @@ inline SVG only; nothing leaves your machine**:
 Scans recorded before source storage existed simply show the findings list
 with a note — never an error.
 
+## How it works
+
+The dashboard is a single server-rendered page with zero client JavaScript
+and zero external requests: every interaction is a plain HTTP idiom — links,
+one form POST, fragment anchors, one theme cookie.
+
+State lives in the database and the URL, so a view is shareable: the severity
+filter is a query parameter and a specific offending line is a fragment
+anchor. The theme (System / Dark / Light) rides a cookie — per browser, not
+part of the URL.
+
+Upload one or more `.tf` files through the form, or POST the same multipart
+request to the API — both paths share one pipeline and one set of limits.
+
+The page then answers three questions at once: **what exactly is wrong and
+where** (the annotated source view highlights each offending line, with the
+rule and its message right beneath it); **how much and how severe** (the
+findings list, severity tiles and per-file scores); and **is it getting
+better** (the score trend across persisted scans).
+
+Rules are data: the pack loads from `rules.yaml` on every scan, so adding a
+guardrail is a YAML edit with zero code changes — the IPv6 world-open clauses
+were added exactly that way.
+
 ## Guardrail pack (7 rules, defined in `rules.yaml`)
 
 | ID | Severity | Guardrail |
