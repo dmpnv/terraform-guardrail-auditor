@@ -26,6 +26,7 @@ class Scan(Base):
     checks_total: Mapped[int] = mapped_column(Integer, default=0)
     checks_failed: Mapped[int] = mapped_column(Integer, default=0)
     score: Mapped[float] = mapped_column(Float, default=100.0)
+    file_scores: Mapped[dict] = mapped_column(JSON, default=dict)
     parse_errors: Mapped[list] = mapped_column(JSON, default=list)
 
     findings: Mapped[list[Finding]] = relationship(

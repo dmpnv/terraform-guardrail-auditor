@@ -6,19 +6,21 @@ security posture on a built-in dashboard. Pure static analysis: no terraform
 binary, no cloud credentials, nothing gets deployed.
 
 ```
-.tf files / inline upload
+.tf files (multipart upload)
         │
         ▼
-FastAPI  /api/v1  ──►  Rule engine (python-hcl2 parse → 11 guardrails)
+FastAPI  /api/v1  ──►  Rule engine (python-hcl2 parse → rules.yaml, 7 guardrails)
         │                          │
         ▼                          ▼
 OpenAPI docs (/docs)      SQLite via SQLAlchemy (data/guardrail.db)
-        │                          │
-        └──────────►  Dashboard at /  (a plain consumer of the API)
+                                   │
+                                   ▼
+                     Dashboard at /  (server-rendered, zero JS / zero CDN)
 ```
 
-- **API-first** — every capability is a REST endpoint; the dashboard holds no
-  logic of its own. Interactive OpenAPI docs at `/docs`.
+- **API-first** — every capability is a REST endpoint with interactive OpenAPI
+  docs at `/docs`; the dashboard at `/` is a server-rendered view of the same
+  SQLite data with no JavaScript and no external requests.
 - **Free database** — SQLite by default; point `GUARDRAIL_DATABASE_URL` at
   Postgres/MySQL to swap (SQLAlchemy handles both).
 - **Severity-weighted scoring** — failing a CRITICAL check costs 10× a LOW one;
@@ -35,8 +37,11 @@ python -m venv .venv
 - Dashboard: <http://127.0.0.1:8011>
 - API docs: <http://127.0.0.1:8011/docs>
 
-Then click **“Scan insecure sample”** on the dashboard (or use the API below)
-to watch every guardrail fire; **“Scan secure sample”** shows a clean 100/A run.
+Then upload Terraform through the API and open the dashboard:
+
+```bash
+curl -s -X POST http://127.0.0.1:8011/api/v1/scans -F "files=@tests/fixtures/ssh_world.tf"
+```
 
 ## API
 
@@ -67,12 +72,8 @@ curl -s http://127.0.0.1:8011/api/v1/health
 # rules — the loaded guardrail pack
 curl -s http://127.0.0.1:8011/api/v1/rules
 
-# create a scan — target form per SPEC.md (multipart upload; lands in slice 3;
-# repeat -F for more files)
-curl -s -X POST http://127.0.0.1:8011/api/v1/scans -F "files=@tests/fixtures/ssh_world.tf"
-
-# create a scan — draft form (works against the committed draft today)
-curl -s -X POST http://127.0.0.1:8011/api/v1/scans -H "Content-Type: application/json" -d '{"label": "insecure baseline", "path": "samples/insecure"}'
+# create a scan — multipart upload (repeat -F for more files; optional label)
+curl -s -X POST http://127.0.0.1:8011/api/v1/scans -F "files=@tests/fixtures/ssh_world.tf" -F "label=baseline"
 
 # one scan by id
 curl -s http://127.0.0.1:8011/api/v1/scans/1
@@ -84,30 +85,22 @@ curl -s "http://127.0.0.1:8011/api/v1/scans/1/findings?severity=CRITICAL"
 The dashboard is not an API endpoint — open <http://127.0.0.1:8011/> in a
 browser.
 
-## Guardrail pack (v0.1 — 11 rules)
+## Guardrail pack (7 rules, defined in `rules.yaml`)
 
 | ID | Severity | Guardrail |
 |---|---|---|
-| GR-EBS-001 | HIGH | Block storage (EBS volumes, instance block devices) encrypted at rest |
-| GR-EC2-001 | HIGH | EC2 instances enforce IMDSv2 (`http_tokens = "required"`) |
-| GR-IAM-001 | CRITICAL | No IAM policy grants `Action "*"` on `Resource "*"` |
-| GR-NET-001 | CRITICAL | SSH/RDP never exposed to 0.0.0.0/0 or ::/0 |
-| GR-NET-002 | HIGH | Any world-open ingress is flagged |
-| GR-RDS-001 | HIGH | RDS instances not publicly accessible |
-| GR-RDS-002 | HIGH | RDS storage encrypted at rest |
-| GR-S3-001 | CRITICAL | No public bucket ACLs |
-| GR-S3-002 | MEDIUM | Buckets declare server-side encryption |
-| GR-S3-003 | HIGH | Buckets enable all four public-access-block settings |
-| GR-SEC-001 | CRITICAL | No hardcoded secrets (password/token/*_key literals) |
+| S3-PUBLIC | CRITICAL | No public S3 buckets (inline ACL, `aws_s3_bucket_acl`, or a bucket policy with `"Principal": "*"`) |
+| SSH-WORLD | CRITICAL | SSH (22) never open to 0.0.0.0/0 |
+| RDP-WORLD | CRITICAL | RDP (3389) never open to 0.0.0.0/0 |
+| S3-NO-ENCRYPTION | MEDIUM | Buckets declare server-side encryption (inline or companion resource) |
+| EBS-NO-ENCRYPTION | HIGH | EBS volumes encrypted at rest (`encrypted` missing or false fails) |
+| RDS-PUBLIC | HIGH | RDS instances not publicly accessible |
+| IAM-WILDCARD | HIGH | No IAM policy grants `Action "*"` |
 
 **Rules are user-editable data.** Adding or changing a guardrail means editing
 `rules.yaml` — with zero code changes; the engine loads the pack at startup
 from a configurable path (`GUARDRAIL_RULES_FILE`). A dedicated test proves it:
 a newly added YAML rule is picked up by the engine and produces a finding.
-*(Status note: the committed draft still ships rules as Python code in
-`app/engine/rules.py`; the migration to `rules.yaml` is governed by `SPEC.md`
-and lands in slice 2.)*
-
 **Data contract — `companion_type` on `absent`:** `absent <attr>` normally
 flags a resource when `<attr>` is missing. With `companion_type: <type>` the
 check instead **passes** if the scan contains a resource of `<type>` that is
@@ -155,10 +148,10 @@ Denominator = 10 + 10 + 10 + 2 + 5 = **37** · numerator = 10 + 10 + 2 = **22**
 
 `score = 100 × (1 − 22/37) = 40.5405… →` **40.5**
 
-This exact fixture with its hand-computed 40.5 is asserted by a pytest.
-*(Status note: the committed draft still runs interim weights 10/6/3/1 over an
-11-rule pack; the formula above becomes the implementation in slice 3 per
-`SPEC.md`.)*
+This exact fixture (`tests/fixtures/score_formula.tf` — the public ACL is the
+inline `acl` attribute on the bucket, not a separate `aws_s3_bucket_acl`
+resource, so the denominator stays 37) with its hand-computed 40.5 is asserted
+by `tests/test_score.py`.
 
 ## Tests
 
@@ -173,6 +166,7 @@ secure sample must score 100.0) plus API round-trips through a throwaway DB.
 
 | Env var | Default | Purpose |
 |---|---|---|
+| `GUARDRAIL_RULES_FILE` | `./rules.yaml` | The guardrail pack (rules are data) |
 | `GUARDRAIL_DATABASE_URL` | `sqlite:///./data/guardrail.db` | Any SQLAlchemy URL |
 | `GUARDRAIL_DATA_DIR` | `./data` | Where the default SQLite file lives |
 | `GUARDRAIL_MAX_FILES` | `500` | Max `.tf` files per scan |

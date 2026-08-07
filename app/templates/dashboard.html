@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guardrail Auditor — Terraform Security Posture</title>
+<style>
+/* Zero external dependencies: system fonts, inline CSS, inline SVG, no JS. */
+:root{
+  --bg:#0c1626; --surface:#121e31; --surface-2:#182842;
+  --ink:#f2f6fc; --ink-2:#a8b7cc; --muted:#6b7a92;
+  --grid:#223350; --border:rgba(255,255,255,.08); --accent:#3987e5;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{color-scheme:dark}
+body{background:var(--bg);color:var(--ink);
+  font:14px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code,.mono{font-family:ui-monospace,Consolas,monospace}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px 56px}
+.topbar{display:flex;align-items:center;gap:14px;padding:18px 0;
+  border-bottom:1px solid var(--border);margin-bottom:22px}
+.topbar h1{font-size:18px;font-weight:650}
+.eyebrow{font-size:10px;font-weight:600;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);font-family:ui-monospace,Consolas,monospace}
+.spacer{flex:1}
+.card{background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:18px;margin-bottom:20px}
+.card>.eyebrow{display:block;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:280px 1fr;gap:20px}
+.score-num{font:650 54px/1 ui-monospace,Consolas,monospace}
+.score-num small{font-size:22px;color:var(--muted);font-weight:500}
+.meta{color:var(--ink-2);font-size:12.5px;margin-top:10px}
+.meta div{margin-top:2px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.tile{background:var(--surface-2);border:1px solid var(--border);
+  border-radius:8px;padding:12px 14px}
+.tile .lbl{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:600;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+  font-family:ui-monospace,Consolas,monospace}
+.tile .n{font:650 24px/1.3 ui-monospace,Consolas,monospace;margin-top:4px}
+.glyph{font-style:normal;font-size:12px}
+svg text{font:10.5px ui-monospace,Consolas,monospace;fill:var(--muted)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:550;
+  font-family:ui-monospace,Consolas,monospace;color:var(--ink-2);
+  border:1px solid var(--grid);border-radius:99px;padding:4px 12px}
+.chip.on{background:var(--surface-2);color:var(--ink);border-color:var(--muted)}
+.findings-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.findings-head .eyebrow{margin:0}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--grid);
+  white-space:nowrap;font-family:ui-monospace,Consolas,monospace}
+td{padding:10px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:top}
+.sev{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:550;
+  font-family:ui-monospace,Consolas,monospace;white-space:nowrap}
+.dim{color:var(--ink-2)}
+.dimmer{color:var(--muted);font-size:11.5px;margin-top:3px}
+.evidence{display:inline-block;background:var(--bg);border:1px solid var(--grid);
+  border-radius:5px;padding:2px 7px;font-size:11px;color:var(--ink-2);margin-top:4px;
+  max-width:460px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.empty{padding:22px 0;color:var(--ink-2)}
+.empty code{display:inline-block;background:var(--bg);border:1px solid var(--grid);
+  border-radius:6px;padding:8px 12px;margin-top:10px;font-size:12px;color:var(--ink)}
+footer{border-top:1px solid var(--border);padding-top:14px;display:flex;gap:16px;
+  flex-wrap:wrap;font:11px ui-monospace,Consolas,monospace;color:var(--muted)}
+@media (max-width:900px){.grid{grid-template-columns:1fr}.tiles{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="topbar">
+  <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path fill="#3987e5" d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3z"/><path fill="#0c1626" d="m10.6 14.6-2.1-2.1 1.1-1.1 1 1 3.8-3.8 1.1 1.1-4.9 4.9z"/></svg>
+  <div>
+    <h1>Guardrail Auditor</h1>
+    <span class="eyebrow">Terraform · Enterprise Security Guardrails</span>
+  </div>
+  <div class="spacer"></div>
+  <a href="/docs">API docs</a>
+</header>
+
+{% if not latest %}
+<div class="card">
+  <span class="eyebrow">No scans yet</span>
+  <div class="empty">
+    Upload Terraform through the API to see your posture here:<br>
+    <code>curl -s -X POST http://127.0.0.1:8011/api/v1/scans -F "files=@tests/fixtures/ssh_world.tf"</code>
+  </div>
+</div>
+{% else %}
+
+<section class="grid">
+  <div class="card">
+    <span class="eyebrow">Risk score — latest scan</span>
+    <div class="score-num">{{ latest.score }}<small> /100</small></div>
+    <div class="meta">
+      <div>{{ latest.label or "(unlabeled)" }} · {{ latest.created_at.strftime("%b %d, %H:%M") }} UTC</div>
+      <div>{{ latest.files_scanned }} file(s) · {{ latest.resources_scanned }} resources ·
+           {{ latest.checks_failed }}/{{ latest.checks_total }} checks failed</div>
+      <div>source: {{ latest.source }} · {{ latest.duration_ms }} ms</div>
+      {% if latest.parse_errors %}<div style="color:#fab219">⚠ {{ latest.parse_errors|length }} file(s) could not be parsed</div>{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <span class="eyebrow">Findings by severity — latest scan</span>
+    <div class="tiles">
+      {% for s in severities %}
+      <div class="tile">
+        <div class="lbl"><i class="glyph" style="color:{{ sev_meta[s].color }}">{{ sev_meta[s].glyph }}</i>{{ sev_meta[s].label }}</div>
+        <div class="n">{{ counts[s] }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<div class="card">
+  <span class="eyebrow">Score trend — last {{ trend.points|length }} scan(s)</span>
+  <svg viewBox="0 0 {{ trend.w }} {{ trend.h }}" width="100%" height="150" role="img"
+       aria-label="Guardrail score across scans, 0 to 100">
+    {% for g in trend.gridlines %}
+    <line x1="30" y1="{{ g.y }}" x2="{{ trend.w - 6 }}" y2="{{ g.y }}" stroke="#223350" stroke-width="1"/>
+    <text x="4" y="{{ g.y + 3.5 }}">{{ g.label }}</text>
+    {% endfor %}
+    <polyline points="{{ trend.polyline }}" fill="none" stroke="#3987e5" stroke-width="2"
+              stroke-linejoin="round" stroke-linecap="round"/>
+    {% for p in trend.points %}
+    <circle cx="{{ p.x }}" cy="{{ p.y }}" r="3.5" fill="#3987e5">
+      <title>scan #{{ p.scan.id }}{% if p.scan.label %} — {{ p.scan.label }}{% endif %}: score {{ p.scan.score }}</title>
+    </circle>
+    {% endfor %}
+  </svg>
+</div>
+
+<div class="card">
+  <div class="findings-head">
+    <span class="eyebrow">Findings — scan #{{ latest.id }}</span>
+    <nav class="chips" aria-label="Severity filter">
+      <a class="chip {{ 'on' if not active_severity }}" href="/">All {{ latest.findings_count }}</a>
+      {% for s in severities %}
+      <a class="chip {{ 'on' if active_severity == s }}" href="/?severity={{ s }}">
+        <i class="glyph" style="color:{{ sev_meta[s].color }}">{{ sev_meta[s].glyph }}</i>{{ sev_meta[s].label }} {{ counts[s] }}
+      </a>
+      {% endfor %}
+    </nav>
+  </div>
+  {% if findings %}
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Severity</th><th>Rule</th><th>Resource</th><th>Location</th><th>Detail</th></tr></thead>
+      <tbody>
+        {% for f in findings %}
+        <tr>
+          <td><span class="sev"><i class="glyph" style="color:{{ sev_meta[f.severity].color }}">{{ sev_meta[f.severity].glyph }}</i>{{ sev_meta[f.severity].label }}</span></td>
+          <td class="mono">{{ f.rule_id }}</td>
+          <td class="mono">{{ f.resource_address }}</td>
+          <td class="mono dim">{{ f.file }}{% if f.line %}:{{ f.line }}{% endif %}</td>
+          <td>
+            {{ f.message }}
+            {% if f.evidence %}<br><span class="evidence mono">{{ f.evidence }}</span>{% endif %}
+            <div class="dimmer">Fix: {{ f.remediation }}</div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% elif active_severity %}
+  <div class="empty">No {{ sev_meta[active_severity].label }} findings in this scan — pick another filter.</div>
+  {% else %}
+  <div class="empty">No findings. Every guardrail check passed for this scan.</div>
+  {% endif %}
+</div>
+
+{% endif %}
+
+<footer>
+  <span>Guardrail Auditor v{{ version }}</span>
+  <span>API-first · FastAPI + SQLite</span>
+  <span>{{ rules_loaded }} guardrails loaded from rules.yaml</span>
+  <span>{{ total_scans }} scan(s) recorded</span>
+</footer>
+</div>
+</body>
+</html>

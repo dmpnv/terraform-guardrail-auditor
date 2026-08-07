@@ -1,3 +1,4 @@
+"""API tests — scans are created via multipart upload (SPEC.md form)."""
 SNIPPET = """
 resource "aws_security_group" "open" {
   ingress {
@@ -8,6 +9,16 @@ resource "aws_security_group" "open" {
   }
 }
 """
+
+
+def post_scan(client, named_files, label=""):
+    """Multipart POST /scans: named_files = [(filename, content_str), ...]."""
+    return client.post(
+        "/api/v1/scans",
+        data={"label": label},
+        files=[("files", (name, content.encode("utf-8"), "text/plain"))
+               for name, content in named_files],
+    )
 
 
 def test_health(client):
@@ -24,16 +35,14 @@ def test_rules_endpoint(client):
     assert any(rule["id"] == "SSH-WORLD" for rule in r.json())
 
 
-def test_inline_scan_roundtrip(client):
-    r = client.post("/api/v1/scans", json={
-        "label": "api-test",
-        "files": [{"path": "main.tf", "content": SNIPPET}],
-    })
+def test_multipart_scan_roundtrip(client):
+    r = post_scan(client, [("main.tf", SNIPPET)], label="api-test")
     assert r.status_code == 201, r.text
     scan = r.json()
     assert scan["checks_failed"] >= 1
     assert scan["severity_counts"]["CRITICAL"] >= 1
     assert any(f["rule_id"] == "SSH-WORLD" for f in scan["findings"])
+    assert scan["file_scores"]["main.tf"] == 50.0
     sid = scan["id"]
 
     r2 = client.get(f"/api/v1/scans/{sid}/findings", params={"severity": "critical"})
@@ -45,25 +54,37 @@ def test_inline_scan_roundtrip(client):
     assert r3.json()["latest"]["id"] == sid
 
 
-def test_scan_requires_exactly_one_source(client):
-    assert client.post("/api/v1/scans", json={"label": "bad"}).status_code == 422
-
-
-def test_path_scan_of_samples(client):
-    r = client.post("/api/v1/scans", json={
-        "label": "insecure-sample",
-        "path": "samples/insecure",
-    })
+def test_multi_file_upload_gets_per_file_scores(client):
+    bad = ('resource "aws_db_instance" "r" {\n'
+           '  publicly_accessible = true\n'
+           '  skip_final_snapshot = true\n'
+           '}\n')
+    good = ('resource "aws_ebs_volume" "v" {\n'
+            '  availability_zone = "us-east-1a"\n'
+            '  size              = 10\n'
+            '  encrypted         = true\n'
+            '}\n')
+    r = post_scan(client, [("bad.tf", bad), ("good.tf", good)], label="multi")
     assert r.status_code == 201, r.text
-    assert r.json()["score"] < 60
+    scan = r.json()
+    assert scan["files_scanned"] == 2
+    assert scan["file_scores"] == {"bad.tf": 0.0, "good.tf": 100.0}
+    assert scan["score"] == 50.0
 
 
-def test_unknown_path_is_400(client):
-    r = client.post("/api/v1/scans", json={"path": "no/such/dir"})
-    assert r.status_code == 400
+def test_scan_without_files_is_422(client):
+    r = client.post("/api/v1/scans", data={"label": "empty"})
+    assert r.status_code == 422
 
 
 def test_dashboard_served(client):
     r = client.get("/")
     assert r.status_code == 200
     assert "Guardrail" in r.text
+    assert "Risk score" in r.text
+
+
+def test_dashboard_severity_filter(client):
+    r = client.get("/", params={"severity": "CRITICAL"})
+    assert r.status_code == 200
+    assert "Critical" in r.text

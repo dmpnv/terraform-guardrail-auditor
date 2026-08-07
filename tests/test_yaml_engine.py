@@ -87,10 +87,11 @@ def test_ssh_world_golden_fixture():
 
 def test_ssh_world_end_to_end_api(client):
     content = (FIXTURES / "ssh_world.tf").read_text(encoding="utf-8")
-    r = client.post("/api/v1/scans", json={
-        "label": "slice1-e2e",
-        "files": [{"path": "ssh_world.tf", "content": content}],
-    })
+    r = client.post(
+        "/api/v1/scans",
+        data={"label": "slice1-e2e"},
+        files=[("files", ("ssh_world.tf", content.encode("utf-8"), "text/plain"))],
+    )
     assert r.status_code == 201, r.text
     scan = r.json()
     assert scan["findings_count"] == 1

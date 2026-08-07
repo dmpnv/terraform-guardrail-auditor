@@ -80,6 +80,19 @@
   (YAML-appended TEST-TAGS-REQUIRED rule fires with zero code changes).
   **Deleted: app/engine/rules.py** (the draft's Python 11-rule pack) — rules
   are data now, per spec. pytest 27/27.
+- **Slice 3 DELIVERED (Turn 12):** per-file + total score (spec formula,
+  precise pair semantics); score-formula test asserts the hand-computed 40.5
+  on `tests/fixtures/score_formula.tf` (ACL inline on the bucket per the
+  user's constraint — denominator stays 37); multipart `POST /scans` (the
+  only scan form now — JSON/path bodies deleted, pulled forward from slice 4
+  because multipart replaces the request body, with every e2e test rewritten
+  to multipart per the user's instruction); server-rendered Jinja2 dashboard
+  at `/` (score, severity tiles, findings table with query-param severity
+  filter, inline-SVG trend; zero JS / zero CDN / system fonts).
+  **Deleted:** app/dashboard/index.html (CDN page), ScanCreate/FileIn
+  schemas, path-scan resolution, the off-spec A–F grade field. New pins:
+  python-multipart==0.0.32, Jinja2==3.1.6. README corrected (7-rule table,
+  multipart examples, stale status notes removed). pytest 30/30.
 
 ---
 
@@ -310,3 +323,36 @@
   slice-1 fixture's checks_total went 2 -> 4 with the full pack — corrected
   and re-run); live health after restart shows rules_loaded = 7; remotes
   still absent.
+
+### Turn 12 — 2026-08-07 16:30 (+0200)
+
+**Prompt (verbatim):**
+
+> When multipart POST lands, rewrite the JSON-body e2e tests to multipart - the JSON form must not survive slice 4 because a test depends on it. In the 40.5 worked-example fixture, the ACL must be an inline acl attribute on the bucket, not a separate aws_s3_bucket_acl resource - otherwise the denominator changes.
+> Slice 3: go
+
+- **Intent:** deliver slice 3 with two constraints — all scan e2e tests go
+  multipart the moment multipart lands, and the worked-example fixture uses
+  the inline `acl` attribute so the denominator stays exactly 37.
+- **What changed:** evaluate() now produces per-file scores (same formula per
+  file; parsed files with no evaluated checks score 100). New
+  `tests/fixtures/score_formula.tf` (inline acl, no SSE companion, SSH-open
+  SG, encrypted volume) + `tests/test_score.py` asserting checks 5/3, score
+  40.5 and per-file 40.5, plus independent per-file scores and the
+  no-evaluated-checks case. `POST /scans` is multipart
+  (files + optional label; size/count limits enforced) — the JSON/path
+  request forms were **deleted in this slice** (pulled forward from slice 4:
+  multipart replaces the request body, and per instruction no test may
+  depend on the JSON form; every e2e test now posts multipart). Dashboard
+  replaced: `app/templates/dashboard.html` server-rendered via Jinja2 —
+  risk score, per-severity tiles, findings table with `?severity=` filter
+  links, trend as inline SVG with native title tooltips; zero JS, zero CDN,
+  system fonts. **Deleted:** app/dashboard/index.html, ScanCreate/FileIn,
+  path resolution, run_scan's path parameter, the off-spec grade field.
+  README corrected to match reality (7-rule table, multipart curl, notes).
+  prompts.md updated. Pins added: python-multipart==0.0.32, Jinja2==3.1.6.
+- **How verified:** pytest **30/30**; server restarted on a fresh database —
+  live checks: empty-state dashboard renders, the README's exact multipart
+  curl command uploads ssh_world.tf (finding at line 11 with evidence),
+  dashboard then renders score 75.0 with the trend SVG; dashboard visually
+  inspected in Chrome (charts get looked at, not assumed).

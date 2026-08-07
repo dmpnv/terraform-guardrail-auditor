@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import (APIRouter, Depends, File, Form, HTTPException, Query,
+                     Response, UploadFile)
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -12,8 +12,8 @@ from ..db import get_db
 from ..engine.scanner import run_scan
 from ..engine.yaml_engine import load_rules
 from ..models import Finding, Scan
-from ..schemas import (FindingOut, RuleOut, ScanCreate, ScanOut,
-                       ScanSummaryOut, SummaryOut, TopRule, TrendPoint)
+from ..schemas import (FindingOut, RuleOut, ScanOut, ScanSummaryOut,
+                       SummaryOut, TopRule, TrendPoint)
 
 router = APIRouter()
 
@@ -34,22 +34,25 @@ def list_rules():
     return [RuleOut.model_validate(r) for r in load_rules()]
 
 
-def _resolve_scan_dir(raw: str) -> Path:
-    candidates = [Path(raw)]
-    if not Path(raw).is_absolute():
-        candidates.append(config.BASE_DIR / raw)
-    for c in candidates:
-        if c.is_dir():
-            return c
-    raise HTTPException(status_code=400, detail=f"Directory not found on server: {raw}")
-
-
 @router.post("/scans", response_model=ScanOut, status_code=201, tags=["scans"])
-def create_scan(body: ScanCreate, db: Session = Depends(get_db)):
-    """Audit Terraform from a server-local directory or inline file contents."""
-    if body.path:
-        return run_scan(db, path=_resolve_scan_dir(body.path), label=body.label)
-    return run_scan(db, files=[(f.path, f.content) for f in body.files], label=body.label)
+async def create_scan(
+    files: list[UploadFile] = File(..., description="One or more .tf files"),
+    label: str = Form("", max_length=200),
+    db: Session = Depends(get_db),
+):
+    """Upload one or more Terraform files (multipart) and run a scan."""
+    if len(files) > config.MAX_FILES_PER_SCAN:
+        raise HTTPException(status_code=400,
+                            detail=f"Too many files (max {config.MAX_FILES_PER_SCAN}).")
+    named: list[tuple] = []
+    for f in files:
+        raw = await f.read()
+        if len(raw) > config.MAX_FILE_BYTES:
+            raise HTTPException(status_code=400,
+                                detail=f"{f.filename}: exceeds size limit "
+                                       f"({config.MAX_FILE_BYTES} bytes).")
+        named.append((f.filename or "upload.tf", raw.decode("utf-8", errors="replace")))
+    return run_scan(db, files=named, label=label)
 
 
 @router.get("/scans", response_model=list[ScanSummaryOut], tags=["scans"])
