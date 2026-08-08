@@ -107,6 +107,10 @@ def parse_files(named_files: Iterable[tuple[str, str]]) -> ParsedProject:
     project = ParsedProject()
     for path, text in named_files:
         project.files.append(path)
+        # CRLF/CR -> LF before hcl2 sees the text: python-hcl2 chokes on \r,
+        # and upload bytes arrive verbatim (Saturday finding 1). Normalizing
+        # here protects every current and future input path.
+        text = text.replace("\r\n", "\n").replace("\r", "\n")
         if not text.endswith("\n"):
             text += "\n"
         project.sources[path] = text

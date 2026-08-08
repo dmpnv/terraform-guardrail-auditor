@@ -1,0 +1,5 @@
+# Terraform fixtures are byte-stable across clones regardless of
+# core.autocrlf (Saturday finding 1, optional hardening): the parser also
+# normalizes CRLF at runtime, so this is belt-and-braces for reviewers
+# diffing fixture bytes.
+*.tf text eol=lf

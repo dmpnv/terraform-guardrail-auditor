@@ -357,6 +357,7 @@ footer{border-top:1px solid var(--border);padding-top:14px;display:flex;
     </nav>
   </div>
   {% if not has_sources %}<div class="note-muted">Source not stored for this scan.</div>{% endif %}
+  {% if latest.parse_errors %}<div class="note-muted">⚠ {{ latest.parse_errors|length }} file(s) could not be parsed — findings and score cover only what parsed:{% for pe in latest.parse_errors %} {{ pe.file }}{{ ";" if not loop.last }}{% endfor %}</div>{% endif %}
 
   {% macro findings_table(compact) %}
   <table>
