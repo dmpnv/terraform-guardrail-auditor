@@ -2,12 +2,16 @@
 
 ## SESSION CLOSED — Saturday close 2026-08-08 11:57:30 (+0200), commit 2a03a35
 
-- **Total elapsed: 21:11 wall clock** from the fixed T0
-  (2026-08-07T14:46:28+02:00), applied exactly as the standing rule says —
-  this spans the overnight idle between Friday's close and Saturday's
-  verification session. Friday's actively-worked closes stand recorded
-  below (4:10 at Turn 23, 4:48 at Turn 25); Saturday added Turn 24's deck
-  screenshots and Turn 26's verification fixes.
+- **Active worked time: Friday 4:48 (Turns 1–25) + Saturday verification
+  session 0:03 (Turn 26 and the closes; logged clock reads 11:54:46 →
+  11:57:56) = 4:51 total.** (Wall-clock span from the fixed T0
+  2026-08-07T14:46:28+02:00: 21:11, including the overnight idle between
+  Friday's 19:34 close and the Saturday session start.) Friday's recorded
+  closes stand untouched below (4:10 at Turn 23, 4:48 at Turn 25 — the
+  latter including Turn 24's deck screenshots, which were Friday evening
+  work; an earlier version of this header misattributed them to Saturday).
+  The standing in-session Elapsed rule (system clock minus T0) is
+  unchanged — this reword applies to this close header only.
 - Saturday verification (fresh clone, Windows): **finding 1 fixed** — CRLF
   Terraform no longer scans as silently healthy (line-ending normalization
   in parse_files, parse failures surfaced on scan + dashboard, three
@@ -933,3 +937,18 @@
   temp clone made with `-c core.autocrlf=true`: bare `pytest -q` 38/38,
   `python -m pytest -q` 38/38, and the checked-out fixture contains no
   CRLF bytes (gitattributes proven live). Remotes: none, as always.
+
+### Turn 27 — 2026-08-08 12:12 (+0200)
+
+**Prompt (verbatim):**
+
+> Reword the Saturday close header in prompts.md - one commit, wording only, no numbers invented.----Problem: the header now leads with "Total elapsed: 21:11 wall clock". That figure includes theovernight idle between Friday's close (19:34) and the Saturday verification session. Next to thebrief's "MVP in 4-6 hours (Max window: 16h)" - which measures worked time reported as Elapsed -a leading 21:11 invites misreading idle as work, or as a window violation.----Fix: lead with comparable work-time figures, keep the wall span as a clarifying parenthetical:- First line: "Active worked time: Friday 4:48 (Turns 1-25) + Saturday verification session0:XX (Turn 26 and the closes) = 5:XX total." Compute 0:XX from your own Saturday clock reads -session start to the close commit - do not estimate.- Parenthetical after it: "(wall-clock span from the fixed T0: 21:1X, including the overnightidle between Friday's 19:34 close and the Saturday session start)".- MVP 2:33 stays untouched. Friday's recorded closes (4:10, 4:48) stay untouched.- In-session Elapsed lines keep the standing rule (system clock minus T0) exactly as is -this reword applies to the close header only.Note the reword in prompts.md as usual (a one-line Turn entry is fine), commit.
+
+- Reworded the Saturday close header to lead with active worked time —
+  Friday 4:48 + Saturday 0:03 (computed from the logged Saturday clock
+  reads 11:54:46 → 11:57:56, not estimated) = **4:51 total**, wall span
+  21:11 kept as the clarifying parenthetical; MVP 2:33 and the recorded
+  Friday closes untouched; also corrected the header's misattribution of
+  Turn 24 (deck screenshots) to Saturday — it was Friday-evening work
+  inside the 4:48. Wording only; verified by re-reading the header;
+  committed as its own commit.
