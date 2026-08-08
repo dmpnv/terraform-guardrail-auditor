@@ -1,8 +1,8 @@
 # Prompt Audit Log — Enterprise Security Guardrail Auditor
 
-## SESSION CLOSED — Saturday close 2026-08-08 11:59 (+0200)
+## SESSION CLOSED — Saturday close 2026-08-08 11:57:30 (+0200), commit 2a03a35
 
-- **Total elapsed: 21:13 wall clock** from the fixed T0
+- **Total elapsed: 21:11 wall clock** from the fixed T0
   (2026-08-07T14:46:28+02:00), applied exactly as the standing rule says —
   this spans the overnight idle between Friday's close and Saturday's
   verification session. Friday's actively-worked closes stand recorded
@@ -19,8 +19,10 @@
   submission day.
 - Final state at this close: **38/38 tests** (both invocation forms,
   verified from a fresh temp clone checked out with core.autocrlf=true);
-  **32 commits** including this closure; tree clean; still zero remotes,
-  nothing ever pushed.
+  **33 commits** including this closure and its timestamp correction
+  (this header first carried pre-commit estimates 11:59/21:13 — corrected
+  to the actual close-commit clock immediately, in its own commit, per the
+  Turn-15 precedent); tree clean; still zero remotes, nothing ever pushed.
 
 ## (superseded) SESSION CLOSED — final close 2026-08-07 19:34 (+0200)
 
