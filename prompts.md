@@ -1,6 +1,29 @@
 # Prompt Audit Log — Enterprise Security Guardrail Auditor
 
-## SESSION CLOSED — Saturday close 2026-08-08 11:57:30 (+0200), commit 2a03a35
+## SESSION RE-CLOSED — pre-submission close, 2026-08-08 (Turn 30)
+
+- **Active worked time: Friday 4:48 (Turns 1–25) + Saturday 0:11
+  (Turns 26–30) = 4:59 total.** (Wall-clock span from the fixed T0
+  2026-08-07T14:46:28+02:00 to this close: 22:30, including overnight and
+  between-turn idle.) Saturday is the sum of each turn's logged
+  first-to-last clock reads — Turn 26: 3:10 (11:54:46→11:57:56),
+  Turn 27: 0:28 (12:12:07→12:12:35), Turn 28: 2:20 (12:48:50→12:51:10),
+  Turn 29: 4:40 (12:57:28→13:02:08), Turn 30: 0:38 (13:16:33→13:17:11,
+  the cutoff read taken just before this closing commit) = 11:16 —
+  **idle between turns is excluded as not worked**. Friday's 4:48 and the
+  MVP 2:33 are historical and unchanged.
+- **36 commits through `3102b5d`** — `git rev-list --count 3102b5d` prints
+  36 forever; this re-close adds its own commit(s) on top, recorded in
+  Turn 30.
+- **Reopened and re-closed, plainly:** the 11:57 Saturday close below was
+  reopened for the pre-submission sweep — Turn 27 (close-header reword),
+  Turn 28 (living-document number sweep), Turn 29 (the API slide) — and
+  the session is re-closed here. Every earlier close block below stands
+  untouched as history.
+- State at this close: **38/38 tests** (suite re-run at close); tree clean;
+  origin published by the human; **nothing ever pushed by the AI**.
+
+## (superseded) SESSION CLOSED — Saturday close 2026-08-08 11:57:30 (+0200), commit 2a03a35
 
 - **Active worked time: Friday 4:48 (Turns 1–25) + Saturday verification
   session 0:03 (Turn 26 and the closes; logged clock reads 11:54:46 →
@@ -1054,3 +1077,44 @@
   (gitignored, not committed); staleness re-check of the Numbers slide:
   tests 38, commits-pin 34, endpoints 5, fixtures 11 all still print
   their printed numbers. No push; remote untouched.
+
+### Turn 30 — 2026-08-08 13:16 (+0200) — pre-submission re-close of the header
+
+**Prompt (verbatim):**
+
+> Last turn before submission. Wording and figures only, no code. One commit, then stop. Do NOT push.Problem. The block at the top of prompts.md still reads "SESSION CLOSED — Saturday close2026-08-08 11:57:30, commit 2a03a35" and states "Saturday verification session 0:03 ... = 4:51total" and "33 commits". Three further turns were logged after it (27 at 12:12, 28 at 12:48, 29 at12:57) and the repository is now at 36 commits. So the most-read part of the log — the header areviewer sees first — carries exactly the class of stale figure that Turn 28 was run to eliminateeverywhere else. Worse, it now says SESSION CLOSED with three turns printed below it.Fix the header, and nothing else:
+>
+> 1. Recompute Saturday's active worked time from your OWN logged clock reads across every Saturday   turn (26, 27, 28, 29 and this one), not from the commit timestamps and not by estimating. Idle   between turns is not worked time; say how you treated the gaps. Friday's 4:48 and the MVP 2:33   are historical and stay exactly as they are.
+>
+> 2. State the new total the same way the current header does: Friday figure + Saturday figure = total,   with the wall-clock span from T0 kept as the clarifying parenthetical it already is.3. The commit count must not go stale from this very commit. Pin it to a hash the way the deck's   Numbers table now does, with a check command that prints the printed number forever.
+>
+> 4. Make the header honest about being reopened: it is no longer a single Saturday close. Say plainly   that the session was reopened for the pre-submission sweep and re-closed here. Keep every earlier   close block below it untouched — they are history.5. Per the Turn-15 precedent, if any figure in the header is a pre-commit estimate, correct it to the   actual value immediately in its own follow-up commit rather than leaving an approximation.
+>
+> Do NOT touch: any turn entry, SPEC.md, README.md, deck/deck.md, or any code. If a figure in the deckor README turns out to be wrong while you are here, report it in your answer and leave it alone —I will decide.Update prompts.md with this prompt verbatim, intent, what changed, how it was verified. ReportElapsed. Commit. Do not push and do not touch remotes.In your answer, print the final header text so I can paste the total straight into the submissionemail.
+
+- **Intent:** replace the stale Saturday-close header with an honest
+  re-close: Saturday active time recomputed from logged clock reads
+  (idle excluded), pinned commit count, plain statement of the reopening;
+  touch nothing else.
+- **What changed (prompts.md header + this entry only):** new
+  "SESSION RE-CLOSED — pre-submission close" block at the top; the old
+  Saturday close demoted below it with only a "(superseded)" title prefix,
+  contents byte-identical (same treatment the Friday close received).
+  Saturday active time = sum of per-turn spans, each span = the turn's
+  first logged clock read to its last: Turn 26 3:10 + Turn 27 0:28 +
+  Turn 28 2:20 + Turn 29 4:40 + Turn 30 0:38 (start 13:16:33 to the
+  13:17:11 cutoff read taken just before the closing commit) = 11:16 →
+  0:11; **gaps between turns (11:57:56→12:12:07, 12:12:35→12:48:50,
+  12:51:10→12:57:28, 13:02:08→13:16:33) are idle, not worked, and are
+  excluded**. Total: Friday 4:48 + Saturday 0:11 = 4:59; wall span from
+  T0 kept as the parenthetical (22:30 to the cutoff read). Commit count
+  pinned: 36 through `3102b5d`. Per point 5, any divergence between these
+  cutoff-based figures and the actual closing-commit clock is corrected
+  in an immediate follow-up commit.
+- **How verified:** `git rev-list --count HEAD` → 36 and
+  `git rev-list --count 3102b5d` → 36 (pin prints its number forever);
+  closing suite run `python -m pytest -q` → "38 passed"; the arithmetic
+  above re-added by hand (3:10+0:28 = 3:38; +2:20 = 5:58; +4:40 = 10:38;
+  +0:38 = 11:16). Deck and README re-checked while here, per instruction,
+  and **no wrong figure was found — nothing outside this header and this
+  entry was touched**. No push; remote untouched.
