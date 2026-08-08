@@ -46,6 +46,9 @@ style: |
   section .cropwin img { width: 224%; max-width: none; max-height: none;
     display: block; margin: -870px 0 0 -50px; padding: 0;
     background: transparent; border-radius: 0; box-shadow: none; }
+  /* added (disclosed): compact code-block margins so the API slide's real
+     exchange plus its footnote fit one slide; no supplied rule altered */
+  section pre { margin: 10px 0 6px; }
   section .takeaway { color: #ffb703; font-size: 22px; margin-top: 16px; font-weight: 600; }
   section .loop {
     position: absolute; top: 58px; right: 54px;
@@ -118,6 +121,32 @@ server-rendered dashboard with zero client JavaScript.
 
 ---
 
+## The API
+
+# Five endpoints, **one real exchange**
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/api/v1/health` | liveness + rules loaded |
+| GET | `/api/v1/rules` | the guardrail pack from rules.yaml |
+| POST | `/api/v1/scans` | multipart upload → run a scan |
+| GET | `/api/v1/scans/{scan_id}` | one scan with findings + per-file scores |
+| GET | `/api/v1/scans/{scan_id}/findings` | findings, filterable by severity / rule_id |
+
+```bash
+curl -s -X POST http://127.0.0.1:8011/api/v1/scans -F "files=@tests/fixtures/ssh_world.tf" -F "label=baseline"
+```
+```json
+{ "id": 21, "label": "baseline", "score": 75.0, "checks_failed": 1, ...
+  "findings": [ { "rule_id": "SSH-WORLD", "severity": "CRITICAL", "line": 11,
+                  "resource_address": "aws_security_group.bastion", "file": "ssh_world.tf",
+                  "evidence": "cidr_blocks = [\"0.0.0.0/0\"]", "remediation": "Restrict the source CIDR ..." } ] }
+```
+
+*Trimmed real output (…), not a mock — full curl set: README, "curl examples — every endpoint".*
+
+---
+
 ## Rules are data
 
 # Closing a gap with **zero engine changes**
@@ -164,7 +193,7 @@ server-rendered dashboard with zero client JavaScript.
 | API endpoints | 5 | `/openapi.json`, README curl section |
 | Golden fixtures | 11 | `tests/fixtures/*.tf` |
 | Commits through `b8f04da` | 34 | `git rev-list --count b8f04da` |
-| Prompts logged verbatim | 28 turns | `prompts.md` |
+| Prompts logged verbatim | 28 turns through `bf634c9` | `git show bf634c9:prompts.md` |
 | Themes | 2 + System | `/theme/{system,dark,light}` |
 | Manual code edits by the human | 0 | `CLAUDE.md` rule, `prompts.md` log |
 | Remotes / pushes during the build | 0 — published once, by the human, at submission | `prompts.md` close headers |

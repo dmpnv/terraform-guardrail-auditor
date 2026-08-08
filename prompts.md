@@ -1015,3 +1015,42 @@
   both living docs for count/duration/state assertions surfaced the same
   list, and every figure now printed sits next to the file or command
   that reproduces it.
+
+### Turn 29 — 2026-08-08 12:57 (+0200) — "The API" slide
+
+**Prompt (verbatim):**
+
+> One more deck turn, one commit, still no push. The deck claims API-first in three bullets but showsonly dashboard visuals - add one compact slide that shows the API itself.----New slide "The API", placed right after "The dashboard, live" (deck goes to 12 slides):1. A small table of the five endpoints: method, path, one-phrase purpose (health, rules pack,create scan, get scan, findings with severity/rule filters). Pull paths from the code, not memory.2. Below it, the money shot: one REAL exchange - the multipart curl (one line, from the README) anda trimmed REAL JSON response showing a single finding object with its provenance fields (rule_id,severity, resource_address, file, line, evidence, remediation). Run the server locally, execute thecurl against a fixture, paste the actual output, trim to the one finding with an ellipsis marker andsay in a footnote that it is trimmed real output, not a mock. Stop the server afterwards.3. Close the slide with one footer line pointing to the full set: "curl examples for everyendpoint: README, API section" (adapt wording to the actual README heading).4. Style: text only, theme as is, must fit one slide; no external assets, offline rendering intact.Numbers slide should not change (endpoint count is already there); verify nothing else went stale.Re-render deck/deck.pdf (stays gitignored). prompts.md as always, commit. DO NOT push - the humanpushes once, after this.
+
+- **Intent:** add one compact "The API" slide (endpoint table + one real
+  captured exchange) after "The dashboard, live"; 12 slides; no push.
+- **What changed:** endpoint table pulled from the code
+  (`grep -nE "^@router\.(get|post)" app/api/routes.py` → the five routes;
+  prefix `/api/v1` from app.include_router) — GET /health, GET /rules,
+  POST /scans, GET /scans/{scan_id}, GET /scans/{scan_id}/findings. The
+  real exchange: server started, the README's exact multipart curl
+  executed against tests/fixtures/ssh_world.tf, actual response captured
+  (scan id 21, score 75.0, one CRITICAL SSH-WORLD finding), server
+  stopped. The slide shows that output trimmed to the single finding with
+  ellipsis markers — every value verbatim from the capture (id 21, label
+  "baseline", score 75.0, checks_failed 1, rule_id, severity, line 11,
+  resource_address, file, evidence `cidr_blocks = ["0.0.0.0/0"]`,
+  remediation truncated at a real prefix) — plus the footnote "Trimmed
+  real output (…), not a mock" and the pointer to the README's "curl
+  examples — every endpoint" section. Two disclosed theme-block additions
+  while fitting one slide: compact `section pre` margins (commented), and
+  during verification the Numbers slide's turns row was found to go stale
+  from this very commit (Turn 29 added) — pinned like the commits row:
+  "28 turns through `bf634c9` | `git show bf634c9:prompts.md`". First pin
+  attempt used b8f04da and the check itself printed 27, catching my error
+  — repinned to bf634c9 which verifiably prints 28. Text-only slide, no
+  external assets, offline rendering intact; deck is 12 slides.
+- **How verified:** real exchange captured live (output in this entry's
+  description is the capture, not retyped from memory); pin check
+  `git show bf634c9:prompts.md | grep -c "^### Turn"` → 28; slide
+  rendered to PNG three times and inspected — first render clipped the
+  footnote, fixed by a 4-line JSON trim + the pre-margin line, final
+  render fully inside the slide; 12-page PDF rebuilt with marp-cli
+  (gitignored, not committed); staleness re-check of the Numbers slide:
+  tests 38, commits-pin 34, endpoints 5, fixtures 11 all still print
+  their printed numbers. No push; remote untouched.
