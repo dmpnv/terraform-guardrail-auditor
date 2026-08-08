@@ -952,3 +952,66 @@
   Turn 24 (deck screenshots) to Saturday — it was Friday-evening work
   inside the 4:48. Wording only; verified by re-reading the header;
   committed as its own commit.
+
+### Turn 28 — 2026-08-08 12:48 (+0200) — final pre-submission number sweep
+
+**Prompt (verbatim, as re-sent complete after an interrupted first send):**
+
+> Final pre-submission turn. One turn, one commit, then stop. Do NOT push - I publish myself.
+>
+> Problem. The deck slide titled "Numbers" opens with "Every figure below is checkable in the repo",and several of its figures are now stale, because Saturday's verification session added tests andcommits after the deck was written. The README carries a stale test count too. On a submission whosewhole argument is that every claim is verifiable, a wrong number on the verifiability slide is theworst possible defect, so fix it properly rather than patching the ones I list.
+>
+> Scope boundary, read first: fix LIVING documents only - README.md and deck/deck.md (and the closeheader of prompts.md if a figure there is genuinely wrong today). Historical entries are untouchable:turn entries in prompts.md and the approved SPEC.md amendments record what was true at the momentthey were written - "35/35" inside an old turn is history, not an error. Do not rewrite history.
+>
+> Do this:1. Re-derive EVERY quantitative claim in deck/deck.md and README.md from the repository and from git   at this commit. Do not trust any number already written, and do not trust the ones I mention below.   Read the actual sources: run the test suite for the test count, use git for commit and turn counts,   count the rule ids in rules.yaml, count the router decorators for the endpoint count, count the   fixture files, and so on. Every figure on a slide or in the README must be re-checked, not just the   obviously wrong ones.
+>
+> 2. The ones I already know are wrong, as a cross-check on your own sweep, not as the task list:   the deck says 35 tests in two places and the README says 33, the deck's commit count and its   "prompts logged verbatim" turn count are both behind, and the fixture count may or may not still hold.
+>
+> 3. Commit-count rows must not go stale again from this very commit (or any later one): pin them to a   hash instead of HEAD - e.g. "34 commits through b8f04da" checked by `git rev-list --count b8f04da`.   Choose the wording; the check command must print the printed number forever.
+>
+> 4. The "Remotes / pushes | 0" row needs judgement, not arithmetic. It was true and meaningful while   the repository was local: it recorded that the AI never pushed anything. The repository is now   published on GitHub, so a reader running `git remote -v` as that row instructs will see an origin   and conclude the slide is lying. Keep the original meaning and make it true: the point being made   is that no remote existed and nothing was pushed during the build, and that publication happened   once, by the human, at submission. Word the row and its check so both halves are accurate and   still verifiable. The same applies to any README sentence about "local git only".
+>
+> 5. Sweep for the same class of defect in the other LIVING text (README, deck): any count, duration,   or state assertion that later work has invalidated. Fix what you find and say what you fixed.   Respect the scope boundary above.6. Re-render deck/deck.pdf locally with marp-cli so the PDF matches the markdown. Keep it gitignored,   as before.
+>
+> 7. Update prompts.md as always: this prompt verbatim, intent, what changed, how it was verified.   Report Elapsed from the stored T0. Commit. DO NOT push and do not create or modify remotes -   the human pushes after reviewing the diff.
+>
+> Verification standard for this turn: after your changes, every number printed in the deck or READMEmust be reproducible by running the exact command or opening the exact file named next to it. Statein the log which commands you actually ran to confirm that, with their output.
+
+- **Intent:** re-derive every quantitative claim in the living documents
+  from the repo at this commit, fix the stale ones, pin the commit count to
+  a hash, reword the remotes row for the now-published repository, sweep
+  for the whole defect class, re-render the PDF, one commit, no push.
+- **What changed (living docs only — no turn entry, no SPEC amendment
+  touched):** deck/deck.md — "What was built" bullet and the closing-table
+  tests row 35 → **38** (+ CRLF regressions named); Numbers slide: tests
+  35 → **38**; commits row re-pinned from the stale HEAD-relative
+  "27 / HEAD~1" to **"Commits through `b8f04da` | 34 |
+  `git rev-list --count b8f04da`"** (prints 34 forever); prompts row
+  24 → **28 turns** (this entry included); remotes row reworded to
+  **"Remotes / pushes during the build | 0 — published once, by the human,
+  at submission | prompts.md close headers"**; the closing slide's "Local
+  git only" line reworded the same way. README.md — Tests section 33 →
+  **38** with the theme-cookie round-trip and CRLF regressions added to
+  the coverage list. Checked and left correct: 7 guardrails / 5 operators
+  / 5 endpoints / 11 fixtures (the user's doubt on fixtures resolved:
+  still 11), themes 2+System, manual-edits 0, MVP 2:33 and the slide-7
+  hashes (historical, verifiable), the slide-5 caption's "20 real scans"
+  (describes the committed screenshot, not live state). The prompts.md
+  Saturday close header needed no change — its figures are scoped "at
+  this close" and remain true statements about that close. deck/deck.pdf
+  re-rendered (417 KB, stays gitignored).
+- **How verified (commands actually run, with output):**
+  `python -m pytest -q` → "38 passed, 1 warning";
+  `git rev-list --count HEAD` → 34; `git rev-list --count b8f04da` → 34
+  (the pin prints the printed number regardless of later commits);
+  `grep -c "^- id:" rules.yaml` → 7; operator vocabulary line present in
+  rules.yaml naming exists/absent/eq/contains/open_port (5);
+  `grep -cE "^@router\.(get|post)" app/api/routes.py` → 5;
+  `ls tests/fixtures/*.tf | wc -l` → 11;
+  `grep -c "^### Turn" prompts.md` → 27 before this entry, 28 with it;
+  `git remote -v` (read-only) → origin
+  github.com/dmpnv/terraform-guardrail-auditor confirmed — published by
+  the human, remote untouched by me, nothing pushed; a regex sweep over
+  both living docs for count/duration/state assertions surfaced the same
+  list, and every figure now printed sits next to the file or command
+  that reproduces it.

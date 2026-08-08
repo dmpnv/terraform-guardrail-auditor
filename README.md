@@ -217,13 +217,14 @@ by `tests/test_score.py`.
 Bare `pytest -q` works too, from a fresh clone — a root `conftest.py` puts the
 repo on the import path.
 
-33 tests, all against a throwaway database: golden fixtures asserting exact
+38 tests, all against a throwaway database: golden fixtures asserting exact
 (rule, resource, line) findings for every guardrail, the companion negative
 fixture (bucket + linked SSE config ⇒ zero findings for S3-NO-ENCRYPTION),
 the rules-are-data extensibility proof (a YAML-appended rule fires with zero
 code changes), the hand-computed 40.5 score-formula fixture, API round-trips,
-and dashboard end-to-end (form upload → redirect → annotated source render,
-plus the no-stored-source fallback).
+dashboard end-to-end (form upload → redirect → annotated source render, plus
+the no-stored-source fallback), the theme-cookie round-trip, and the CRLF
+line-ending regressions.
 
 ## Configuration
 

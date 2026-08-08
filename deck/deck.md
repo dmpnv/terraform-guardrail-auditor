@@ -89,7 +89,7 @@ server-rendered dashboard with zero client JavaScript.
 - **7 guardrails** for Terraform: public S3 (ACL or policy), SSH & RDP world-open (IPv4 **and** IPv6), S3 & EBS encryption, RDS public, IAM `Action "*"`.
 - **API-first**: FastAPI + SQLite — 5 endpoints, multipart upload, OpenAPI docs, clean operationIds.
 - **Server-rendered dashboard**: annotated source view, severity filter, per-file scores, score trend, System/Dark/Light theming.
-- **35 tests**: golden fixtures asserting exact *(rule, resource, line)* triples, a hand-computed score fixture, end-to-end form flows.
+- **38 tests**: golden fixtures asserting exact *(rule, resource, line)* triples, a hand-computed score fixture, end-to-end form flows, CRLF regressions.
 
 ---
 
@@ -159,15 +159,15 @@ server-rendered dashboard with zero client JavaScript.
 
 | Metric | Value | Where to check |
 | --- | --- | --- |
-| Tests passing | 35 | `python -m pytest -q` |
+| Tests passing | 38 | `python -m pytest -q` |
 | Guardrails / operators | 7 / 5 | `rules.yaml` |
 | API endpoints | 5 | `/openapi.json`, README curl section |
 | Golden fixtures | 11 | `tests/fixtures/*.tf` |
-| Commits before this revision | 27 | `git rev-list --count HEAD~1` |
-| Prompts logged verbatim | 24 turns | `prompts.md` |
+| Commits through `b8f04da` | 34 | `git rev-list --count b8f04da` |
+| Prompts logged verbatim | 28 turns | `prompts.md` |
 | Themes | 2 + System | `/theme/{system,dark,light}` |
 | Manual code edits by the human | 0 | `CLAUDE.md` rule, `prompts.md` log |
-| Remotes / pushes | 0 | `git remote -v` |
+| Remotes / pushes during the build | 0 — published once, by the human, at submission | `prompts.md` close headers |
 
 ---
 
@@ -193,6 +193,6 @@ server-rendered dashboard with zero client JavaScript.
 | `SPEC.md` | the approved contract, plus every amendment in writing |
 | `prompts.md` | every prompt verbatim — intent / change / verification, T0 to now |
 | `rules.yaml` | the 7 guardrails as editable data |
-| `tests/` | 35 tests: golden fixtures, the 40.5 formula, the extensibility proof |
+| `tests/` | 38 tests: golden fixtures, the 40.5 formula, the extensibility proof, the CRLF regressions |
 
-*Local git only — no remotes, nothing ever pushed. Clone it, run pytest, open the dashboard.*
+*No remote existed and nothing was pushed while the work was done — the `prompts.md` close headers record it. Publication happened once, by the human, at submission. Clone it, run pytest, open the dashboard.*
