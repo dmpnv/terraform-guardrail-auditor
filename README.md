@@ -214,6 +214,9 @@ by `tests/test_score.py`.
 .venv/bin/python -m pytest -q          # macOS / Linux
 ```
 
+Bare `pytest -q` works too, from a fresh clone — a root `conftest.py` puts the
+repo on the import path.
+
 33 tests, all against a throwaway database: golden fixtures asserting exact
 (rule, resource, line) findings for every guardrail, the companion negative
 fixture (bucket + linked SSE config ⇒ zero findings for S3-NO-ENCRYPTION),
