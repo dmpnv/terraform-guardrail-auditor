@@ -2,16 +2,19 @@
 
 ## SESSION RE-CLOSED — pre-submission close, 2026-08-08 (Turn 30)
 
-- **Active worked time: Friday 4:48 (Turns 1–25) + Saturday 0:11
-  (Turns 26–30) = 4:59 total.** (Wall-clock span from the fixed T0
-  2026-08-07T14:46:28+02:00 to this close: 22:30, including overnight and
+- **Active worked time: Friday 4:48 (Turns 1–25) + Saturday 0:12
+  (Turns 26–30) = 5:00 total.** (Wall-clock span from the fixed T0
+  2026-08-07T14:46:28+02:00 to this close: 22:31, including overnight and
   between-turn idle.) Saturday is the sum of each turn's logged
   first-to-last clock reads — Turn 26: 3:10 (11:54:46→11:57:56),
   Turn 27: 0:28 (12:12:07→12:12:35), Turn 28: 2:20 (12:48:50→12:51:10),
-  Turn 29: 4:40 (12:57:28→13:02:08), Turn 30: 0:38 (13:16:33→13:17:11,
-  the cutoff read taken just before this closing commit) = 11:16 —
-  **idle between turns is excluded as not worked**. Friday's 4:48 and the
-  MVP 2:33 are historical and unchanged.
+  Turn 29: 4:40 (12:57:28→13:02:08), Turn 30: 1:46 (13:16:33→13:18:19,
+  the closing commit's clock read; the header first carried the 13:17:11
+  pre-commit cutoff = 0:38 / totals 4:59 / 22:30, corrected to the
+  commit-read actuals in this immediate follow-up commit per the Turn-15
+  precedent — the correction's own seconds are the only uncounted Saturday
+  activity) = 12:24 — **idle between turns is excluded as not worked**.
+  Friday's 4:48 and the MVP 2:33 are historical and unchanged.
 - **36 commits through `3102b5d`** — `git rev-list --count 3102b5d` prints
   36 forever; this re-close adds its own commit(s) on top, recorded in
   Turn 30.
