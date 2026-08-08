@@ -1,6 +1,28 @@
 # Prompt Audit Log — Enterprise Security Guardrail Auditor
 
-## SESSION CLOSED — final close 2026-08-07 19:34 (+0200)
+## SESSION CLOSED — Saturday close 2026-08-08 11:59 (+0200)
+
+- **Total elapsed: 21:13 wall clock** from the fixed T0
+  (2026-08-07T14:46:28+02:00), applied exactly as the standing rule says —
+  this spans the overnight idle between Friday's close and Saturday's
+  verification session. Friday's actively-worked closes stand recorded
+  below (4:10 at Turn 23, 4:48 at Turn 25); Saturday added Turn 24's deck
+  screenshots and Turn 26's verification fixes.
+- Saturday verification (fresh clone, Windows): **finding 1 fixed** — CRLF
+  Terraform no longer scans as silently healthy (line-ending normalization
+  in parse_files, parse failures surfaced on scan + dashboard, three
+  regression tests, .gitattributes eol=lf); **finding 2 fixed** — bare
+  `pytest` works from a fresh clone (root conftest.py); **finding 3 noted,
+  no change** — the StarletteDeprecationWarning comes from
+  fastapi/starlette's own testclient import (third-party, site-packages),
+  deliberately left visible: no httpx2 install and no warning filter on
+  submission day.
+- Final state at this close: **38/38 tests** (both invocation forms,
+  verified from a fresh temp clone checked out with core.autocrlf=true);
+  **32 commits** including this closure; tree clean; still zero remotes,
+  nothing ever pushed.
+
+## (superseded) SESSION CLOSED — final close 2026-08-07 19:34 (+0200)
 
 - **Total elapsed: 4:48** (T0 2026-08-07T14:46:28+02:00 → final close,
   system clock). First close at 18:56 / 4:10 (recorded in Turn 23); one
@@ -873,3 +895,39 @@
   dev server already stopped before this closure; `git remote -v` empty —
   nothing was ever pushed; total elapsed computed from the system clock
   against the fixed T0.
+
+### Turn 26 — 2026-08-08 11:54 (+0200) — Saturday verification findings
+
+**Prompt (verbatim):**
+
+> Follow-up session - TWO Saturday verification findings from a fresh clone on Windows.Fix both, separate commits, then re-close the log with the new total elapsed.----FINDING 1 (critical, product bug): scans of CRLF files silently report "all healthy".Reproduced: a fresh clone with git core.autocrlf=true checks fixtures out with CRLF;uploading tests/fixtures/ssh_world.tf through the API returns score=100, findings=0.The same content with \r stripped returns score=75, findings=1 (correct).Root cause: python-hcl2 chokes on \r; the parser failure is silent, the scan countszero evaluated pairs and reports 100.0. Tests never caught it because read_text()uses universal newlines (CRLF->LF in memory), while the server decodes upload bytesverbatim. Any Windows-authored or autocrlf-checked-out .tf hits this.Fix, in this order:a) Normalize line endings at parse input: in parse_files (the narrowest shared point),convert \r\n and bare \r to \n before handing text to hcl2 - one line, protects everycurrent and future input path.b) Surface parser failures instead of silence: if a file fails to parse, the scan andthe dashboard must say so (a parse-errors line on the scan / a muted warning row on thedashboard), never a clean 100 with zero evaluated checks and no explanation. Keep itminimal - this is closing the silent-failure class, not a new feature.c) Regression tests: build CRLF content in-test (content.replace("\n", "\r\n")) andassert findings via parse_files AND via the multipart API - both must equal the LFresults. Also one test for the parse-error surfacing.d) Optional hardening, your call: a .gitattributes with "*.tf text eol=lf" so clonesare byte-stable regardless of autocrlf - document the choice either way in prompts.md.----FINDING 2 (reviewer ergonomics): from a fresh clone, README's".venv\Scripts\python -m pytest -q" passes, but bare "pytest" fails withModuleNotFoundError: No module named 'app' - bare pytest does not put the repo rooton sys.path and the only conftest.py lives in tests/.Fix: add a minimal conftest.py at the repository ROOT so bare pytest works from aclean clone (empty-with-comment if sufficient; sys.path insert only if actuallyrequired - verify by fact). Verify BOTH invocations from a fresh temp clone: 35/35plus the new tests. README commands stay as they are; you may add one line notingboth forms work.----FINDING 3 (note only, NO code change): the pytest run shows oneStarletteDeprecationWarning from fastapi/starlette's own testclient import(third-party, site-packages). Decision: leave it visible - do not install httpx2 onsubmission day and do not filter it. Record one line in prompts.md that this is aknown third-party deprecation, deliberately left visible.----Then: update prompts.md (log all three as Saturday verification findings, reproducedfrom a fresh clone), commit each code fix separately, and re-close the log - samehonest pattern: previous close stands recorded, this is the next follow-up, newtotal elapsed.
+
+- **Intent:** fix the two Saturday fresh-clone findings in separate
+  commits, record the third as a deliberate no-change, re-close the log.
+- **What changed — finding 1 (commit `3516dcd`):** reproduced first —
+  hcl2.loads raises UnexpectedToken on `\r`; CRLF ssh_world content parsed
+  to 0 resources / 0 findings / score 100.0 exactly as reported. Fix (a):
+  one normalization line in parse_files (`\r\n` and bare `\r` → `\n`)
+  before hcl2, sources and spans included, protecting every input path.
+  Fix (b): parse failures now surface as a muted warning row in the
+  dashboard's findings card naming each unparsed file ("findings and score
+  cover only what parsed"), alongside the existing score-card ⚠ line and
+  the scan's parse_errors field. Fix (c): tests/test_crlf.py — CRLF built
+  in-test, asserted equal to LF at parser level (exact triple, line 11,
+  score 75.0) and through the multipart API, plus a surfacing test
+  (broken upload → parse_errors recorded, dashboard shows "could not be
+  parsed" + the filename). Fix (d, taken): .gitattributes `*.tf text
+  eol=lf` — belt-and-braces byte-stability for clones regardless of
+  autocrlf; runtime normalization stands regardless.
+- **What changed — finding 2 (commit `66f3fc8`):** root conftest.py,
+  empty-with-comment — verified by fact that no sys.path code is needed
+  (pytest's importmode=prepend inserts the topmost conftest's directory);
+  README gained one line noting both invocation forms work.
+- **Finding 3 (no change, as decided):** the single pytest warning is
+  StarletteDeprecationWarning raised by fastapi/starlette's own testclient
+  import in site-packages — a known third-party deprecation, deliberately
+  left visible: no httpx2 install, no filter, on submission day.
+- **How verified:** suite 38/38 in the working repo; then from a fresh
+  temp clone made with `-c core.autocrlf=true`: bare `pytest -q` 38/38,
+  `python -m pytest -q` 38/38, and the checked-out fixture contains no
+  CRLF bytes (gitattributes proven live). Remotes: none, as always.
